@@ -34,7 +34,7 @@ public class ZhihuAnswerPublisher {
         publish("581510789","9527001");
     }
 
-    public static void publish(String questionId,String content){
+    public static String publish(String questionId,String content){
         try {
             content = StringEscapeUtils.escapeJson(content);
 
@@ -55,7 +55,6 @@ public class ZhihuAnswerPublisher {
                     "\"disclaimer_type\":\"none\"},\"commercialReportInfo\":{\"isReport\":0},\"toFollower\":{\"push_activity\":true}," +
                     "\"contentsTables\":{\"table_of_contents_enabled\":false},\"thanksInvitation\":{\"thank_inviter_status\":\"close\"," +
                     "\"thank_inviter\":\"\"}}}";
-           // System.out.println("请求JSON体：\n" + requestBody); // 格式化输出，便于调试
 
             // 步骤3：创建HttpClient（Java 11+自带，无需额外依赖）
             HttpClient httpClient = HttpClient.newBuilder()
@@ -87,11 +86,12 @@ public class ZhihuAnswerPublisher {
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
             // 步骤6：处理响应结果
-            handleResponse(response);
+            return  handleResponse(response);
 
         } catch (Exception e) {
             System.err.println("\n发布请求异常：" + e.getMessage());
             e.printStackTrace();
+            return  "发布异常";
         }
     }
 
@@ -99,7 +99,7 @@ public class ZhihuAnswerPublisher {
     /**
      * 处理响应结果（判断发布成功/失败，输出关键信息）
      */
-    private static void handleResponse(HttpResponse<String> response) {
+    private static String handleResponse(HttpResponse<String> response) {
         int statusCode = response.statusCode();
 
         System.out.println("\n响应状态码：" + statusCode);
@@ -109,6 +109,7 @@ public class ZhihuAnswerPublisher {
             System.err.println("发布失败: "+response.body());
         } else if (statusCode == 200 ) {
             System.out.println("\n✅ 回答发布成功！回答ID可从响应体的\"id\"字段获取");
+            return "发布成功";
         } else if (statusCode == 401 || statusCode == 403) {
             System.err.println("\n❌ 发布失败（权限/反爬拦截）：状态码" + statusCode + "，可能原因：");
             System.err.println("1. Cookie过期（需重新从浏览器复制）");
@@ -122,5 +123,6 @@ public class ZhihuAnswerPublisher {
         } else {
             System.err.println("\n❌ 发布失败（未知错误）：状态码" + statusCode);
         }
+        return "发布失败";
     }
 }

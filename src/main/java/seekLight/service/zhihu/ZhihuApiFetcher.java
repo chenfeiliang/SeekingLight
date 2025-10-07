@@ -2,20 +2,20 @@ package seekLight.service.zhihu;
 
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.lang.StringUtils;
+import seekLight.credit.engine.impl.QuotaReqFlowCreditEngine;
+import seekLight.credit.flow.QuotaReqFlow;
 import seekLight.dto.FeedItem;
 import seekLight.dto.Paging;
 import seekLight.dto.Target;
 import seekLight.dto.ZhihuResponse;
 import seekLight.service.model.OllamaClient;
+import seekLight.utils.SpringUtils;
 
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ZhihuApiFetcher {
@@ -24,6 +24,8 @@ public class ZhihuApiFetcher {
     private static final String X_ZSE_96 = "2.0_NMivLybv4AQ7hMZ5=HPeJCiQUBr2GCheS9+IwK=k92TKe9Yz/3hJFWvWZTnuL9Zc";
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient(); // 复用HttpClient，提升效率
     private static final Set<String> set = new HashSet<>();
+
+    private static QuotaReqFlowCreditEngine quotaReqFlowCreditEngine = SpringUtils.getBean(QuotaReqFlowCreditEngine.class);
 
     public static void main(String[] args) throws Exception {
         // 1. 初始页URL（第一页）
@@ -125,10 +127,15 @@ public class ZhihuApiFetcher {
                     System.out.println("标题: " + title);
                     System.out.println("questionId: " + questionId);
                     System.out.println("内容: " + target.getExcerpt());
-                    String chat = OllamaClient.chat(String.format("请根据问题，写一个500字以上的故事，请保证故事有头有尾，不要中途续写，开头参考现有的经典小说开头范例,问题: %s,具体问题内容: %s", title, target.getExcerpt()));
-                    System.out.println("答案: " + chat);
-                    System.out.println("----------------------------------------");
-                    ZhihuAnswerPublisher.publish(questionId,chat);
+                    QuotaReqFlow quotaReqFlow = new QuotaReqFlow();
+                    quotaReqFlow.setBusiSno(UUID.randomUUID().toString());
+                    quotaReqFlow.setStep("");
+                    quotaReqFlow.setRoute("judgeType,zhihuGenerator,zhiHuPublish");
+                    quotaReqFlow.putParam("zhihu_question",String.format("问题: %s,具体问题内容: %s", title, target.getExcerpt()));
+                    quotaReqFlow.putParam("zhiHuGenerator_title", title);
+                    quotaReqFlow.putParam("zhiHuGenerator_excerpt", target.getExcerpt());
+                    quotaReqFlow.putParam("zhiHuPublish_questionId",questionId);
+                    quotaReqFlowCreditEngine.doFlow(quotaReqFlow);
                     set.add(questionId);
                 }
             }
