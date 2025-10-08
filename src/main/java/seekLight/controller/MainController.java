@@ -5,7 +5,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import seekLight.service.toutiao.ToutiaoRecommendQuestionJsoup;
 import seekLight.service.zhihu.ZhihuHotListCrawler;
+import seekLight.service.zhihu.ZhihuHotRankFetcher;
 import seekLight.workflow.engine.impl.WorkFlowCreditEngine;
 import seekLight.service.zhihu.ZhihuApiFetcher;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +20,7 @@ public class MainController {
     @Autowired
     private WorkFlowCreditEngine WorkFlowCreditEngine;
     @ResponseBody
-    @RequestMapping("/hello")
+    @RequestMapping("/zhihuRecommend")
     public String hello(){
 // 1. 初始页URL（第一页）
         String currentPageUrl = "https://www.zhihu.com/api/v3/feed/topstory/recommend?limit=10&desktop=true";
@@ -37,13 +39,31 @@ public class MainController {
             // 更新为下一页URL，准备下一次循环
             currentPageUrl = nextPageUrl;
         }
-        return "hello";
+        return "zhihuRecommend";
     }
 
     @ResponseBody
-    @RequestMapping("/hello2")
+    @RequestMapping("/zhihuHotList")
     public String hello2(){
         ZhihuHotListCrawler.list();
-        return "hello";
+        return "zhihuHotList";
+    }
+
+    @ResponseBody
+    @RequestMapping("/zhihuHotRank")
+    public String hotRank(){
+        new Thread(ZhihuHotRankFetcher::list).start();
+        return "zhihuHotRank";
+    }
+
+    @ResponseBody
+    @RequestMapping("/touTiaoRecomment")
+    public String touTiao(){
+        new Thread(()->{
+            while (true){
+                ToutiaoRecommendQuestionJsoup.list();
+            }
+        }).start();
+        return "touTiaoRecomment";
     }
 }

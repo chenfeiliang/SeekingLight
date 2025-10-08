@@ -24,6 +24,7 @@ public abstract class BaseModelChatClient {
     public abstract String getApiKey();
 
     public  String chat(String question) {
+        question = question+"/no_think";
         List<ChatMessage> messages = new ArrayList<>();
         messages.add(new ChatMessage("system", "你是一个高级AI助手,迅速回答用户问题"));
         messages.add(new ChatMessage("user", question));
@@ -31,6 +32,7 @@ public abstract class BaseModelChatClient {
     }
 
     public  String chat(String question, String ragInfo) {
+        question = question+"/no_think";
         log.info("问题: "+ question);
         log.info("ragInfo: "+ ragInfo);
         if (ragInfo == null) {

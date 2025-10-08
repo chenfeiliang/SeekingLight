@@ -146,7 +146,6 @@ public class ZhihuApiFetcher {
                     workFlow.setStep("");
                     workFlow.setRoute("judgeType,zhihuGenerator,zhiHuPublish");//
                     WorkFlowContext flowContext = new WorkFlowContext(workFlow);
-                    flowContext.putParam("zhihu_question",String.format("问题: %s,具体问题内容: %s", title, target.getExcerpt()));
                     flowContext.putParam("zhiHuGenerator_title", title);
                    // flowContext.putParam("zhiHuGenerator_excerpt", target.getExcerpt());
                     flowContext.putParam("zhiHuPublish_questionId",questionId);
