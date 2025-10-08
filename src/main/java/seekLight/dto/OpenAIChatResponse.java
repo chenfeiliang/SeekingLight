@@ -5,7 +5,10 @@ import lombok.Data;
 import java.util.List;
 
 // 3. 顶层响应实体（API返回结果）
+import lombok.extern.slf4j.Slf4j;
 @Data
+@Slf4j
+
 public class OpenAIChatResponse {
     // 响应ID
     private String id;

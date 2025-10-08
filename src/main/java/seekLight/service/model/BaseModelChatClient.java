@@ -4,6 +4,7 @@ package seekLight.service.model;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import seekLight.dto.ChatMessage;
 import seekLight.service.zhihu.ZhihuGeneratorTool;
 
@@ -14,6 +15,7 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 @Data
+@Slf4j
 public abstract class BaseModelChatClient {
     public abstract String getModel();
 
@@ -29,8 +31,8 @@ public abstract class BaseModelChatClient {
     }
 
     public  String chat(String question, String ragInfo) {
-        System.out.println("问题: "+ question);
-        System.out.println("ragInfo: "+ ragInfo);
+        log.info("问题: "+ question);
+        log.info("ragInfo: "+ ragInfo);
         if (ragInfo == null) {
             return chat(question);
         }
@@ -38,7 +40,7 @@ public abstract class BaseModelChatClient {
         messages.add(new ChatMessage("system", ragInfo));
         messages.add(new ChatMessage("user", question));
         String result = chat(messages);
-        System.out.println("答案: "+ result);
+        log.info("答案: "+ result);
         return result;
     }
 
@@ -51,7 +53,7 @@ public abstract class BaseModelChatClient {
             requestBodyJson.put("stream", false); // 设置为false，获取完整响应，而非流式输出
 
             String requestBody = requestBodyJson.toString();
-            //System.out.println("请求体：\n" + JSON.toJSONString(JSON.parseObject(requestBody), true));
+            //log.info("请求体：\n" + JSON.toJSONString(JSON.parseObject(requestBody), true));
 
             // 3. 创建HttpClient并发送POST请求
             HttpClient httpClient = HttpClient.newBuilder()
@@ -67,14 +69,14 @@ public abstract class BaseModelChatClient {
                     .build();
 
             // 4. 发送请求并获取响应
-            System.out.println("\n正在请求模型: " + getModel() + " ...");
+            log.info("\n正在请求模型: " + getModel() + " ...");
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
             // 5. 处理响应结果
             return handleResponse(response);
 
         } catch (Exception e) {
-            System.err.println("API请求异常：" + e.getMessage());
+            log.error("API请求异常：" + e.getMessage());
             e.printStackTrace();
             return "";
         }
@@ -95,10 +97,10 @@ public abstract class BaseModelChatClient {
             return answer;
         } else if (statusCode == 404) {
             // 404错误通常意味着模型未找到
-            System.err.println("请求失败，状态码：" + statusCode);
-            System.err.println("最可能的原因是模型未在本地找到");
+            log.error("请求失败，状态码：" + statusCode);
+            log.error("最可能的原因是模型未在本地找到");
         } else {
-            System.err.println("API请求失败，状态码：" + statusCode);
+            log.error("API请求失败，状态码：" + statusCode);
         }
         return "";
     }
@@ -110,7 +112,7 @@ public abstract class BaseModelChatClient {
         if (messageObject != null) {
             return messageObject.getString("content");
         } else {
-            System.err.println("响应中无有效message字段");
+            log.error("响应中无有效message字段");
         }
         return "";
     }

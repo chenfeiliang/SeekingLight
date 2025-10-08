@@ -11,6 +11,9 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.extern.slf4j.Slf4j;
+@Slf4j
+
 public class DeepSeekClient extends BaseModelChatClient{
 
     // 1. 常量配置
@@ -39,8 +42,8 @@ public class DeepSeekClient extends BaseModelChatClient{
     public static void main(String[] args) {
         String question = "你好，DeepSeek，请用三句话介绍一下黑洞。";
         String answer = new DeepSeekClient().chat(question);
-        System.out.println("问题: " + question);
-        System.out.println("DeepSeek的回答: " + answer);
+        log.info("问题: " + question);
+        log.info("DeepSeek的回答: " + answer);
     }
 
 

@@ -4,7 +4,10 @@ package seekLight.dto;
 import lombok.Data;
 
 // 2. 对话消息实体（单条消息：角色+内容）
+import lombok.extern.slf4j.Slf4j;
 @Data
+@Slf4j
+
 public class ChatMessage {
     // 角色（system：系统提示，user：用户输入，assistant：助手回复）
     private String role;

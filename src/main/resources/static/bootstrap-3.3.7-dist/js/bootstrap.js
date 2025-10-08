@@ -183,7 +183,10 @@ if (typeof jQuery === 'undefined') {
 +function ($) {
   'use strict';
 
-  // BUTTON PUBLIC CLASS DEFINITION
+  // BUTTON import lombok.extern.slf4j.Slf4j;
+@Slf4j
+
+public class DEFINITION
   // ==============================
 
   var Button = function (element, options) {
@@ -548,7 +551,10 @@ if (typeof jQuery === 'undefined') {
 +function ($) {
   'use strict';
 
-  // COLLAPSE PUBLIC CLASS DEFINITION
+  // COLLAPSE import lombok.extern.slf4j.Slf4j;
+@Slf4j
+
+public class DEFINITION
   // ================================
 
   var Collapse = function (element, options) {
@@ -1267,7 +1273,10 @@ if (typeof jQuery === 'undefined') {
 +function ($) {
   'use strict';
 
-  // TOOLTIP PUBLIC CLASS DEFINITION
+  // TOOLTIP import lombok.extern.slf4j.Slf4j;
+@Slf4j
+
+public class DEFINITION
   // ===============================
 
   var Tooltip = function (element, options) {
@@ -1787,7 +1796,10 @@ if (typeof jQuery === 'undefined') {
 +function ($) {
   'use strict';
 
-  // POPOVER PUBLIC CLASS DEFINITION
+  // POPOVER import lombok.extern.slf4j.Slf4j;
+@Slf4j
+
+public class DEFINITION
   // ===============================
 
   var Popover = function (element, options) {

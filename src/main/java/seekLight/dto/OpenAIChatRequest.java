@@ -6,7 +6,10 @@ import lombok.Data;
 import java.util.List;
 
 // 1. 顶层请求实体（Chat Completions API请求体）
+import lombok.extern.slf4j.Slf4j;
 @Data
+@Slf4j
+
 public class OpenAIChatRequest {
     // 模型名称（如gpt-4、gpt-3.5-turbo）
     private String model;

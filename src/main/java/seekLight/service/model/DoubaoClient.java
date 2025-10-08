@@ -19,6 +19,9 @@ import java.util.List;
  * 结构和用法参考了项目中的 OllamaClient。
  * </p>
  */
+import lombok.extern.slf4j.Slf4j;
+@Slf4j
+
 public class DoubaoClient extends BaseModelChatClient{
 
     // 1. 常量配置（针对豆包API）
@@ -52,8 +55,8 @@ public class DoubaoClient extends BaseModelChatClient{
         // 简单的测试调用
         String question = "你好，豆包，请介绍一下你自己。";
         String answer = new DoubaoClient().chat(question);
-        System.out.println("问题: " + question);
-        System.out.println("豆包的回答: " + answer);
+        log.info("问题: " + question);
+        log.info("豆包的回答: " + answer);
     }
     public  String getAnswer(String responseBody) {
         JSONObject jsonObject = JSON.parseObject(responseBody);
@@ -65,7 +68,7 @@ public class DoubaoClient extends BaseModelChatClient{
                 return messageObject.getString("content");
             }
         }
-        System.err.println("响应中无有效message字段");
+        log.error("响应中无有效message字段");
         return "";
     }
 }
