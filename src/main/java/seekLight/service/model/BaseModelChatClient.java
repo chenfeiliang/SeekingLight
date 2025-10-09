@@ -48,6 +48,7 @@ public abstract class BaseModelChatClient {
 
     public  String chat(List<ChatMessage> messages) {
         try {
+            log.info("问题: {}",messages.toString());
             // 构建Ollama请求体，包含模型名、消息和流式响应设置
             JSONObject requestBodyJson = new JSONObject();
             requestBodyJson.put("model", getModel() );
@@ -75,7 +76,9 @@ public abstract class BaseModelChatClient {
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
             // 5. 处理响应结果
-            return handleResponse(response);
+            String result = handleResponse(response);
+            log.info("答案: {}",result);
+            return result;
 
         } catch (Exception e) {
             log.error("API请求异常：" + e.getMessage());

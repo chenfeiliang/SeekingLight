@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.brotli.dec.BrotliInputStream;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
+import seekLight.agent.Tool;
+import seekLight.dto.QuestionDto;
 import seekLight.entity.WorkFlow;
 import seekLight.utils.SnowflakeUtils;
 import seekLight.utils.SpringUtils;
@@ -15,10 +17,12 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 @Slf4j
-public class ZhihuHotListCrawler {
+public class ZhihuHotListCrawler implements Tool {
     // 知乎热榜接口URL
     private static final String ZHIHU_HOT_LIST_URL = "https://www.zhihu.com/api/v3/feed/topstory/hot-lists/total?limit=50&desktop=true";
 
@@ -31,10 +35,27 @@ public class ZhihuHotListCrawler {
         }
     }
 
+
+    @Override
+    public String getName() {
+        return "知乎热榜查询工具";
+    }
+
+    @Override
+    public String getDescription() {
+        return "知乎热榜查询工具";
+    }
+
+    @Override
+    public String execute(String args) {
+        return list().toString();
+    }
+
     public static void main(String[] args) {
         list();
     }
-    public static void list ()  {
+
+    public static List<QuestionDto>  list ()  {
         try {
         // 1. 构建请求头（关键：复现浏览器的请求头，尤其是Cookie和User-Agent）
         Map<String, String> headers = buildHeaders();
@@ -62,11 +83,12 @@ public class ZhihuHotListCrawler {
         String jsonResponse = new String(decompressedBytes, StandardCharsets.UTF_8);
 
         // 4. 解析JSON（使用Jackson，可选，根据需求提取数据）
-        parseHotListJson(jsonResponse);
+        return parseHotListJson(jsonResponse);
         } catch (Exception e) {
             System.err.println("请求失败：" + e.getMessage());
             e.printStackTrace();
         }
+        return new ArrayList<>();
     }
 
     /**
@@ -131,7 +153,7 @@ public class ZhihuHotListCrawler {
     /**
      * 解析热榜JSON数据，提取关键信息（如排名、标题、热度）
      */
-    private static void parseHotListJson(String jsonResponse) throws IOException {
+    private static List<QuestionDto>  parseHotListJson(String jsonResponse) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode = objectMapper.readTree(jsonResponse);
 
@@ -139,10 +161,11 @@ public class ZhihuHotListCrawler {
         JsonNode dataNode = rootNode.get("data");
         if (dataNode == null || !dataNode.isArray()) {
             System.err.println("热榜数据不存在或格式错误");
-            return;
+            return new ArrayList<>();
         }
 
         // 遍历热榜数据，提取关键信息
+        List<QuestionDto> result = new ArrayList<>();
         log.info("===== 知乎热榜TOP50 =====");
         for (int i = 0; i < dataNode.size(); i++) {
             try {
@@ -166,10 +189,12 @@ public class ZhihuHotListCrawler {
                 WorkFlowContext flowContext = new WorkFlowContext(workFlow);
                 flowContext.putParam("zhiHuGenerator_title", title);
                 flowContext.putParam("zhiHuPublish_questionId",questionId);
-                workFlowCreditEngine.doFlow(flowContext);
+                //workFlowCreditEngine.doFlow(flowContext);
+                result.add(new QuestionDto(questionId,title));
             }catch (Exception ex){
                 log.error("error==>",ex);
             }
         }
+        return result;
     }
 }

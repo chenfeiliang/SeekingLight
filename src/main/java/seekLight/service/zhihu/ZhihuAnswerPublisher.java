@@ -11,9 +11,11 @@ import java.net.http.HttpResponse;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
+import seekLight.agent.Tool;
+
 @Slf4j
 
-public class ZhihuAnswerPublisher {
+public class ZhihuAnswerPublisher implements Tool {
 
 
 
@@ -24,7 +26,28 @@ public class ZhihuAnswerPublisher {
         publish("581510789","9527001");
     }
 
-    public static String publish(String questionId,String content){
+    @Override
+    public String getName() {
+        return "ZhihuAnswerPublisher"; // 工具名称保持唯一性
+    }
+
+    @Override
+    public String getDescription() {
+        return "可以发布知乎问题的答案" +
+                "参数为一个JSON字符串，包含以下字段：" +
+                " - questionId (必需): 问题id。" +
+                " - content (必需): 问题内容"+
+                "示例: " +
+                "{\"questionId\":\"为何很多人认为开5-6年车需换车？ \", \"content\":\"为了新鲜感\"}，该工具返回的结果就是发布结果，为发布成功，发布失败" ;
+    }
+
+    @Override
+    public String execute(String args) {
+        JSONObject jsonObject = JSON.parseObject(args);
+        return publish(jsonObject.getString("questionId"),jsonObject.getString("content"));
+    }
+
+    public static String publish(String questionId, String content){
         try {
             content = StringEscapeUtils.escapeJson(content);
 
