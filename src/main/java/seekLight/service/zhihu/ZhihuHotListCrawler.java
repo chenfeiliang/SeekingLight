@@ -185,11 +185,11 @@ public class ZhihuHotListCrawler implements Tool {
                 WorkFlow workFlow = new WorkFlow();
                 workFlow.setBusiSno( SnowflakeUtils.nextId());
                 workFlow.setStep("");
-                workFlow.setRoute("judgeType,zhihuGenerator,zhiHuPublish");//
+                workFlow.setRoute("judgeType,zhihuGenerator");//,zhiHuPublish
                 WorkFlowContext flowContext = new WorkFlowContext(workFlow);
                 flowContext.putParam("zhiHuGenerator_title", title);
                 flowContext.putParam("zhiHuPublish_questionId",questionId);
-                //workFlowCreditEngine.doFlow(flowContext);
+                workFlowCreditEngine.doFlow(flowContext);
                 result.add(new QuestionDto(questionId,title));
             }catch (Exception ex){
                 log.error("error==>",ex);

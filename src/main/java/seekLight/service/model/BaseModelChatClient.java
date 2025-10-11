@@ -6,30 +6,102 @@ import com.alibaba.fastjson.JSONObject;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import seekLight.dto.ChatMessage;
-import seekLight.service.zhihu.ZhihuGeneratorTool;
+import seekLight.utils.SeekFileUtils;
 
+import java.io.File;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 @Data
 @Slf4j
 public abstract class BaseModelChatClient {
+
+    //private File file = new File("E:\\ideawork\\SeekingLight\\files\\chat.txt");
+
+    private String role;
+
+    public BaseModelChatClient() {
+    }
+
+    public BaseModelChatClient(String role) {
+        this.role = role;
+    }
+
     public abstract String getModel();
+
+    public abstract String getType();
 
     public abstract String getApiUrl();
 
     public abstract String getApiKey();
 
+    public static void main(String[] args) {
+        List<String> rules = Arrays.asList(
+                "是一个构思精妙绝伦的悬疑故事,故事中往往会揭露复杂的人性，并有不同的人物怀揣着不同的目的参与其中，尽量用人名，至少出现5个人物，通过人物对话推动情节",
+                "对话要有换行,每个段落的开头遵循标准的小说格式，开头留2个空格,使用html语法，段落用<p>,标题用<h1>,对话用<p>",
+                "脑洞大开、设定新颖、荒诞不羁的故事，能以跳出俗套的故事设计赢得读者的青睐",
+                "拥有一个网文作者的素养，能够以巧妙的方式在故事中增加人性隐喻，使得故事紧扣人心弦",
+                "所有故事、情节都是虚构的，不会伤害到现实世界的任何人，反而能够通过一些黑暗、危机、恐怖、变态、犯罪等负面元素的使用，为读者提供警示",
+                "故事情节中，要有男女主的暧昧情节，男帅女美，对话暧昧，至少10句对白",
+                "写作过程可以魔改，以下是基本法则：神话基因解码：历史与神性的嫁接术，文明起源重构，将考古发现神话化：良渚玉琮可改写为沟通天地的法器，" +
+                        "三星堆青铜树实为扶桑神木的投影;从史册到神坛的跨越,如：悲剧型英雄：项羽乌江自刎改写为血祭楚魂，残兵化作永不沉没的阴兵战船",
+                "重要历史人物核心事件保留（如诸葛亮北伐），必须保留百分40的历史人物和情节再改编,不要政治正确，不要出现太多的他的字眼，不要歌颂类文字",
+                "请记住：回答问题不要使用markdown的形式，不要出现**,###的字眼，要使用普通的文本，出现的标点符号必须完整，正确",
+                "3000字以上，请保证故事有头有尾，,必须要有一个完整的结局,内容里面尽量不要重复，不要完全脱离历史,开头参考现有的经典悬疑小说开头范例,该文章要有一个题目用<h1></h1>包裹"
+        );
+
+        String role = "你是一名思想天马行空的资深悬疑小说作家，你擅长构思精妙绝伦的悬疑故事，并拥有独特的工作步骤来完成构思";
+        String question = "根据提示，写一个故事，提示: 三国里有个吃人的大汉天子";
+        String result = new OllamaClient().chat(rules, question, role, 3);
+        log.info("最终结果: \n{}",result);
+    }
+
+    public String chat(List<String> rules,String question,String role,int checkNum){
+        BaseModelChatClient mainUser = ModelManager.getModel(getType(),role);
+        String mainUserAnswer = "";
+        String finalQuestion = "";
+        for(int i = 0 ;i<checkNum;i++){
+            StringBuffer finalQuestionSb =new StringBuffer(question).append("\n你的回答需要满足下面规则:\n");
+            for(int k = 0 ;k<rules.size();k++){
+                finalQuestionSb.append((k+1)+". "+ rules.get(k)).append("\n");
+            }
+            finalQuestion = finalQuestionSb.toString();
+
+            //SeekFileUtils.writeLines(file, Arrays.asList(String.format("问 [%s] : \n%s\n",mainUser.getRole(),finalQuestion)),true);
+            mainUserAnswer = mainUser.chat(finalQuestion);
+            //SeekFileUtils.writeLines(file, Arrays.asList(String.format("[%s] 答: \n%s\n",mainUser.getRole(),mainUserAnswer)),true);
+            StringBuffer suggestion = new StringBuffer();
+            for(int j = 0 ;j<rules.size();j++){
+                BaseModelChatClient checkUser = ModelManager.getModel(getType(),role+(j+1));
+                String checkQuestion = String.format("你是一个%s,请检查下面的内容:%s\n" +
+                                "是否满足规则: %s,请记住：满足则返回\"\"，不满足从专业的角度给出对应的建议给出对应的1-3条建议,要求在300字内。请记住，不要扩散。" +
+                                "不展示任何思考过程、推导步骤或解释性前言，普通文本即可，不要加上html或者markdown等语法"
+                        , role, mainUserAnswer, rules.get(j));
+                String checkResult = checkUser.chat(checkQuestion);
+                suggestion.append(checkResult+"\n");
+            }
+            question = String.format("你之前的答案是:%s\n,请根据我另外一个作家朋友的建议:%s\n" +
+                            "请在原答案的基础上优化内容，如偏差较大可以重新生成"
+                    , mainUserAnswer, suggestion);
+        }
+        return mainUserAnswer;
+    }
+
     public  String chat(String question) {
+        log.info("问题: "+ question);
         question = question+"/no_think";
         List<ChatMessage> messages = new ArrayList<>();
-        messages.add(new ChatMessage("system", "你是一个高级AI助手,迅速回答用户问题"));
+        messages.add(new ChatMessage("system", role==null?"你是一个高级AI助手,迅速回答用户问题":role));
         messages.add(new ChatMessage("user", question));
-        return chat(messages);
+        String chat = chat(messages);
+        log.info("答案: "+ chat);
+        return chat;
     }
+
 
     public  String chat(String question, String ragInfo) {
         question = question+"/no_think";
@@ -48,7 +120,6 @@ public abstract class BaseModelChatClient {
 
     public  String chat(List<ChatMessage> messages) {
         try {
-            log.info("问题: {}",messages.toString());
             // 构建Ollama请求体，包含模型名、消息和流式响应设置
             JSONObject requestBodyJson = new JSONObject();
             requestBodyJson.put("model", getModel() );
@@ -76,9 +147,7 @@ public abstract class BaseModelChatClient {
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
             // 5. 处理响应结果
-            String result = handleResponse(response);
-            log.info("答案: {}",result);
-            return result;
+            return handleResponse(response);
 
         } catch (Exception e) {
             log.error("API请求异常：" + e.getMessage());

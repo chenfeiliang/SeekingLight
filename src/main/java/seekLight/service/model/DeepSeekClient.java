@@ -25,9 +25,23 @@ public class DeepSeekClient extends BaseModelChatClient{
 
     private static final String MODEL = "deepseek-chat";
 
+    public DeepSeekClient() {
+        super();
+    }
+
+    public DeepSeekClient(String role) {
+        super(role);
+    }
+
+
     @Override
     public String getModel() {
         return MODEL;
+    }
+
+    @Override
+    public String getType() {
+        return "DeepSeek";
     }
 
     @Override

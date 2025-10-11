@@ -15,8 +15,8 @@ public  class ModelPlugin extends AbstractPlugin<WorkFlow, ModelReport> {
         return new FetcherChain<WorkFlow, ModelReport>().add(new ModelFetcher());
     }
 
-    public ModelPlugin() {
-        this.addInterceptor(new ModelInterceptor());
+    public ModelPlugin(ModelInterceptor modelInterceptor) {
+        this.addInterceptor(modelInterceptor);
     }
 
     @Override

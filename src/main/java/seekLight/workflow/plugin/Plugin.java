@@ -6,7 +6,7 @@ public interface Plugin <F extends Flow>{
 
     boolean support(Flow flow);
 
-    void run(F flow);
+    void run(F flow) throws Exception;
 
     String getName();
 }

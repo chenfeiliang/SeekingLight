@@ -93,6 +93,12 @@
             <version>3.14.0</version> <!-- 最新版本可自行调整 -->
         </dependency>
 
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.11.0</version> <!-- 请检查最新版本 -->
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
         <dependency>
             <groupId>org.jsoup</groupId>

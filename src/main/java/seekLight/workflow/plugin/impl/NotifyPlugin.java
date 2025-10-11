@@ -16,8 +16,8 @@ public  class NotifyPlugin extends AbstractPlugin<WorkFlow, NotifyReport> {
         return new FetcherChain<WorkFlow, NotifyReport>().add(new NotifyFetcher());
     }
 
-    public NotifyPlugin() {
-        addInterceptor(new NotifyInterceptor());
+    public NotifyPlugin(NotifyInterceptor notifyInterceptor) {
+        addInterceptor(notifyInterceptor);
     }
 
     @Override

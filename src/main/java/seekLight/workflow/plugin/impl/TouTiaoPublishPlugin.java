@@ -18,8 +18,8 @@ public  class TouTiaoPublishPlugin extends AbstractPlugin<WorkFlowContext, Map<S
         return new FetcherChain<WorkFlowContext, Map<String,String>>().add(new BaseMapFetcher());
     }
 
-    public TouTiaoPublishPlugin() {
-        this.addInterceptor(new ToutiaoPublishInterceptor());
+    public TouTiaoPublishPlugin(ToutiaoPublishInterceptor toutiaoPublishInterceptor) {
+        this.addInterceptor(toutiaoPublishInterceptor);
     }
 
     @Override

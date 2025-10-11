@@ -19,6 +19,7 @@ CREATE TABLE plugin_info (
 
 CREATE TABLE work_flow (
     busi_sno VARCHAR(100) PRIMARY KEY,
+    rely_busi_sno VARCHAR(100) default '',
     step VARCHAR(100),
     trans_status VARCHAR(5),
     trans_type VARCHAR(5),

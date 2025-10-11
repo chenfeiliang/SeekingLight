@@ -17,8 +17,8 @@ public  class ZhihuPublishPlugin extends AbstractPlugin<WorkFlowContext, Map<Str
         return new FetcherChain<WorkFlowContext, Map<String,String>>().add(new BaseMapFetcher());
     }
 
-    public ZhihuPublishPlugin() {
-        this.addInterceptor(new ZhihuPublishInterceptor());
+    public ZhihuPublishPlugin(ZhihuPublishInterceptor zhihuPublishInterceptor) {
+        this.addInterceptor(zhihuPublishInterceptor);
     }
 
     @Override

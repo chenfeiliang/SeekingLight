@@ -17,8 +17,8 @@ public  class ZhihuGeneratorPlugin extends AbstractPlugin<WorkFlowContext, Map<S
         return new FetcherChain<WorkFlowContext, Map<String,String>>().add(new BaseMapFetcher());
     }
 
-    public ZhihuGeneratorPlugin() {
-        this.addInterceptor(new ZhiHuGeneratorInterceptor());
+    public ZhihuGeneratorPlugin(ZhiHuGeneratorInterceptor zhiHuGeneratorInterceptor) {
+        this.addInterceptor(zhiHuGeneratorInterceptor);
     }
 
     @Override

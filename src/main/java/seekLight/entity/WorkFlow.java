@@ -30,6 +30,8 @@ public class WorkFlow implements Flow {
     @TableId(type = IdType.NONE	)
     private String busiSno;
 
+    private String relyBusiSno;
+
     private String step;
 
     private String transStatus = "S";

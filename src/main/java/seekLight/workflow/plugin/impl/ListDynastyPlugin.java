@@ -5,24 +5,24 @@ import seekLight.workflow.context.WorkFlowContext;
 import seekLight.workflow.fecther.Fetcher;
 import seekLight.workflow.fecther.FetcherChain;
 import seekLight.workflow.fecther.impl.BaseMapFetcher;
-import seekLight.entity.WorkFlow;
-import seekLight.workflow.interceptor.JudgeTypeInterceptor;
+import seekLight.workflow.interceptor.ListDynastyInterceptor;
 import seekLight.workflow.plugin.AbstractPlugin;
 
 import java.util.Map;
+
 @Component
-public  class ZhihuJudgeTypePlugin extends AbstractPlugin<WorkFlowContext, Map<String,String>> {
+public  class ListDynastyPlugin extends AbstractPlugin<WorkFlowContext, Map<String,String>> {
     @Override
     public Fetcher getFetcher() {
         return new FetcherChain<WorkFlowContext, Map<String,String>>().add(new BaseMapFetcher());
     }
 
-    public ZhihuJudgeTypePlugin(JudgeTypeInterceptor judgeTypeInterceptor) {
-        this.addInterceptor(judgeTypeInterceptor);
+    public ListDynastyPlugin(ListDynastyInterceptor listDynastyInterceptor) {
+        this.addInterceptor(listDynastyInterceptor);
     }
 
     @Override
     public String getName() {
-        return "judgeType";
+        return "ListDynasty";
     }
 }

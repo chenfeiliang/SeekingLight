@@ -42,6 +42,19 @@ public class DoubaoClient extends BaseModelChatClient{
     }
 
     @Override
+    public String getType() {
+        return "doubao";
+    }
+
+    public DoubaoClient() {
+        super();
+    }
+
+    public DoubaoClient(String role) {
+        super(role);
+    }
+
+    @Override
     public String getApiUrl() {
         return API_URL;
     }

@@ -18,8 +18,8 @@ public  class TouTiaoGeneratorPlugin extends AbstractPlugin<WorkFlowContext, Map
         return new FetcherChain<WorkFlowContext, Map<String,String>>().add(new BaseMapFetcher());
     }
 
-    public TouTiaoGeneratorPlugin() {
-        this.addInterceptor(new TouTiaoGeneratorInterceptor());
+    public TouTiaoGeneratorPlugin(TouTiaoGeneratorInterceptor touTiaoGeneratorInterceptor) {
+        this.addInterceptor(touTiaoGeneratorInterceptor);
     }
 
     @Override

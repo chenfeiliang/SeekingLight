@@ -1,28 +1,90 @@
-package seekLight.workflow.interceptor;
+package seekLight.service.toutiao;
 
-import org.apache.commons.lang.StringUtils;
-import org.springframework.stereotype.Component;
-import seekLight.entity.WorkFlow;
-import seekLight.service.model.DeepSeekClient;
-import seekLight.service.model.DoubaoClient;
-import seekLight.service.model.OllamaClient;
-import seekLight.service.toutiao.TouTiaoGeneratorTool;
-import seekLight.service.zhihu.ZhihuGeneratorTool;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import seekLight.workflow.context.WorkFlowContext;
 
-@Component
 @Slf4j
 
-public class ZhiHuGeneratorInterceptor implements PluginInterceptor<WorkFlowContext, Map<String,String>>{
+public class NormalTool {
+    public static String getRagInfo() {
+        return "你是一个历史学家，精通中国所有历史，不展示任何思考过程、推导步骤或解释性前言";
+    }
 
-    @Override
-    public void afterFetch(WorkFlowContext flow, Map<String,String> data) {
-//        String zhiHuGeneratorContent = new OllamaClient()
+    public static String getRagInfoStory() {
+        String temp =  "请记住：直接输出最终结果，不展示任何思考过程、推导步骤或解释性前言；\n" +
+                "请记住：代码类问题仅返回代码+必要注释，无需额外说明；\n" +
+                "请记住：文字类问题仅返回简洁结论，避免冗余，\n" +
+                "请记住：回答问题使用第一人称回答或者写一个故事说明，不要让发现你是AI回答，答案里面不要重复问题的内容\n" +
+                "请记住：回答问题不要使用markdown的形式，不要出现**,###的字眼，要使用普通的文本\n" +
+                "请记住：回答问题不要使用markdown的形式，不要出现**,###的字眼，要使用普通的文本\n" +
+                "请记住：回答问题不要使用markdown的形式，不要出现**,###的字眼，要使用普通的文本,特别重要\n" +
+                "每个段落的开头遵循标准的小说格式，开头留2个空格\n"+
+                "请记住：回答问题要有适当的换行，让整个故事层次分明。对话要有换行"+
+                "请记住：对话要有换行,请记住：对话要有换行,请记住：对话要有换行,请记住：对话要有换行,请记住：对话要有换行,\n" +
+                "请记住，使用html语法，段落用<p>,标题用<h1><h2>\n"+
+                "请记住，使用html语法，段落用<p>，段落用<p>,标题用<h1><h2>\n"+
+                "每个小标题用<h1>,段落用<p>，对话用<p>";
+        return "你是一位专业的历史类玄幻作家，基于历史改编，写出令人赞叹的天马行空的故事，融合至少3种脑洞元素，运用起承转合的结构，让故事迭代起伏。\n" +
+                "写作过程可以魔改，以下是基本法则：\n" +
+                "一、神话基因解码：历史与神性的嫁接术\n" +
+                "文明起源重构\n" +
+                "将考古发现神话化：良渚玉琮可改写为沟通天地的法器，三星堆青铜树实为扶桑神木的投影\n" +
+                "参考《山海经》笔法，用大禹治水解释长江改道，塑造为应龙断尾引江的创世神话\n" +
+                "神格历史化\n" +
+                "帝王封神体系：秦始皇陵地宫设计为镇压十二金人的神魔战场，兵马俑实为战死英灵的化身\n" +
+                "武则天无字碑转化为记录天机的时间碑文，每百年显现一段预言\n" +
+                "二、人物炼金术：从史册到神坛的跨越\n" +
+                "英雄原型塑造\n" +
+                "悲剧型英雄：项羽乌江自刎改写为血祭楚魂，残兵化作永不沉没的阴兵战船\n" +
+                "智慧型：张良得黄石公传授的《太公兵法》，实为周朝遗留的星图密卷\n" +
+                "反派神性化\n" +
+                "妲己设定为封神榜逃逸的九尾狐灵，附身苏妲己实为报复商纣王毁其修行洞府\n" +
+                "秦桧被设计为岳王枪上怨气所化的诅咒体，被迫执行天罚\n" +
+                "三、叙事织锦：神话逻辑的时空编织\n" +
+                "关键事件神谕化\n" +
+                "安史之变：杨贵妃马嵬坡之死实为月宫仙子历劫，霓裳羽衣曲是唤醒月力的咒术\n" +
+                "郑和下西洋：宝船队寻找的不仅是异域珍宝，更是镇压海眼的神州九鼎\n" +
+                "三幕剧神话结构\n" +
+                "第一幕（神启）：白蛇传改写为法海发现雷峰塔镇压着上古相柳残魂\n" +
+                "第二幕（试炼）：梁祝化蝶实为阴阳司掌簿笔误，二人需完成三生劫难方可转世\n" +
+                "第三幕（升华）：岳飞精忠报国刺字实为上古兵家血脉觉醒仪式\n" +
+                "四、符号炼金：文化意象的神话转译\n" +
+                "器物通灵体系\n" +
+                "传国玉玺：和氏璧内藏有祖龙残魂，得玺者需承受历代帝王怨气反噬\n" +
+                "敦煌飞天：描绘的不仅是壁画，更是被封印的西域乐神族\n" +
+                "节气神话网络\n" +
+                "清明雨：实为亡魂跨界时的泪水，地府鬼门关在此日松动\n" +
+                "冬至日：周天子祭天仪式暗含与太阳神交易的契约\n" +
+                "五、禁忌与平衡：神话现实的黄金比例\n" +
+               
+                "考据红线\n" +
+                "重要历史人物核心事件保留（如诸葛亮北伐），但添加八阵图实为上古封印阵\n" +
+                "神话元素占比不超过40%，避免完全架空历史认知\n" +
+                "文化符码\n" +
+                "将《周易》卦象转化为占卜法术，六十四卦对应六十四种天地法则\n" +
+                "唐诗宋词具现为言灵术，李白醉酒诗百篇实为剑仙剑气化形\n" +
+                temp;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //        String zhiHuGeneratorContent = new OllamaClient()
 //                .chat(String.format("请根据问题，写一个5000字以上的故事，请保证故事有头有尾，不要中途续写，" +
 //                                "开头参考现有的经典小说开头范例,问题: %s,具体问题内容: %s",
 //                data.get("zhiHuGenerator_title"), data.get("zhiHuGenerator_excerpt")),
@@ -49,7 +111,7 @@ public class ZhiHuGeneratorInterceptor implements PluginInterceptor<WorkFlowCont
 //        String role = "你是一名思想天马行空的资深悬疑小说作家，你擅长构思精妙绝伦的悬疑故事，并拥有独特的工作步骤来完成构思";
 //        String question = "根据提示，写一个故事，提示: "+ data.get("zhiHuGenerator_title");
 //        String result = new OllamaClient().chat(rules, question, role, 5);
-        //log.info("最终结果: \n{}",result);
+    //log.info("最终结果: \n{}",result);
 
 //        List<String> rules = Arrays.asList(
 //                "情节要爽，“沉冤昭雪”的爽： 主角被冤枉、被鄙视、被践踏，然后用绝对的实力或智商，把所有看不起他的人的脸，狠狠地踩在地上摩擦;" +
@@ -95,23 +157,4 @@ public class ZhiHuGeneratorInterceptor implements PluginInterceptor<WorkFlowCont
 //        if(StringUtils.isEmpty(result)){
 //            result = new OllamaClient().chat(rules, question, role, 3);
 //        }
-
-                List<String> rules = Arrays.asList(
-                "开头用生活场景引入,用“比喻法”解释核心原理,加入1个案例，一些故事情节,结尾延伸1个相关冷知识,不要直接出现比喻法，比喻,小验证,冷知识等相关的字眼”",
-                "最后必须要给问题一个确切的答案，总的回答",
-                "语言口语化,诙谐幽默，扣人心弦，避免公式和复杂词汇，适合[受众，如：10岁以上孩子/普通成年人]阅读",
-                "对话要有换行,每个段落开头留2个空格,使用html语法，段落用<p>,标题用<h1>,对话用<p>",
-                "请记住：回答问题不要使用markdown的形式，不要出现**,###的字眼，要使用普通的文本，出现的标点符号必须完整，正确",
-                "1500字以上，内容不重复，每个章节标题用<h1>包裹,标题不要直接出现生活场景，比喻法，小验证,冷知识等和内容相关字眼"
-        );
-
-        String role = "你是一个智慧学者，博学多才，擅长逻辑分析与知识应用。";
-        String question = "根据提示，回答这个问题，提示: "+ data.get("zhiHuGenerator_title");
-        String result = new OllamaClient().chat(rules, question, role, 3);
-        if(StringUtils.isEmpty(result)){
-            result = new OllamaClient().chat(rules, question, role, 3);
-        }
-
-        flow.putParam("zhiHuPublish_content",result);
-    }
 }

@@ -38,7 +38,7 @@ public abstract class AbstractPlugin<F extends Flow,D> implements Plugin<F>{
     }
 
     @Override
-    public void run(F flow) {
+    public void run(F flow) throws Exception {
         if(!support(flow)){
             return;
         }
