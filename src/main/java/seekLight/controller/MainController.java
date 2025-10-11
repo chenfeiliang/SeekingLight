@@ -5,9 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import seekLight.entity.WorkFlow;
 import seekLight.service.model.OllamaClient;
 import seekLight.service.toutiao.ToutiaoRecommendQuestionJsoup;
@@ -18,6 +16,9 @@ import seekLight.workflow.context.WorkFlowContext;
 import seekLight.workflow.engine.impl.WorkFlowCreditEngine;
 import seekLight.service.zhihu.ZhihuApiFetcher;
 import lombok.extern.slf4j.Slf4j;
+import seekLight.workflow.service.impl.WorkFlowServiceImpl;
+
+import javax.validation.constraints.NotBlank;
 
 @CrossOrigin(origins = "*")
 @Controller
@@ -26,6 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 public class MainController {
     @Autowired
     private WorkFlowCreditEngine workFlowCreditEngine;
+    @Autowired
+    private WorkFlowServiceImpl workFlowService;
     @ResponseBody
     @RequestMapping("/zhihuRecommend")
     public String hello(){
@@ -97,4 +100,21 @@ public class MainController {
         }).start();
         return "touTiaoRecomment";
     }
+
+    /**
+     * 头条推荐问题重试接口（GET 方式）
+     * @param busiSno 业务编号（必传，用于标识具体重试业务场景）
+     * @return 接口响应提示
+     */
+    @ResponseBody
+    @GetMapping("/retryFlow") // GET 请求方式，符合查询/触发类接口设计
+    // @NotBlank 注解：校验 busiSno 不为空（需配合 Spring Validation 依赖）
+    public String retryFlow(@RequestParam(value = "busiSno", required = true)
+                                   @NotBlank(message = "业务编号 busiSno 不能为空") String busiSno) {
+        //20251011142213764734586595840000
+        WorkFlowContext flow = workFlowService.getFlow(busiSno);
+        workFlowCreditEngine.doFlow(flow);
+        return "retryFlow";
+    }
+
 }

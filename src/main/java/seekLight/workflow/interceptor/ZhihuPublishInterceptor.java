@@ -16,12 +16,12 @@ public class ZhihuPublishInterceptor implements PluginInterceptor<WorkFlowContex
 
     @Override
     public void afterFetch(WorkFlowContext flow, Map<String,String> data) {
-        throw new FlowAsyncInterrupterException("临时中断");
-//        String publish = ZhihuAnswerPublisher.publish(data.get("zhiHuPublish_questionId"), data.get("zhiHuPublish_content"));
-//        log.info("publish结果："+publish);
-//        flow.putParam("zhihuPublish_result",publish);
-//        if("发布失败".equals(publish)){
-//            throw new FlowAsyncInterrupterException("发布失败");
-//        }
+       // throw new FlowAsyncInterrupterException("临时中断");
+        String publish = ZhihuAnswerPublisher.publish(data.get("zhiHuPublish_questionId"), data.get("zhiHuPublish_content"));
+        log.info("publish结果："+publish);
+        flow.putParam("zhihuPublish_result",publish);
+        if("发布失败".equals(publish)){
+            throw new FlowAsyncInterrupterException("发布失败");
+        }
     }
 }

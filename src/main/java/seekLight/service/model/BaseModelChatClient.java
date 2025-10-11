@@ -16,11 +16,25 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.*;
+
 @Data
 @Slf4j
 public abstract class BaseModelChatClient {
 
-    //private File file = new File("E:\\ideawork\\SeekingLight\\files\\chat.txt");
+    // 1. 定义线程池（建议作为类级别的静态变量，避免频繁创建/销毁线程）
+    // 核心线程数：根据 CPU 核心数配置（一般为 CPU 核心数 * 2），可根据业务调整
+    private static final ExecutorService executor = new ThreadPoolExecutor(
+            Runtime.getRuntime().availableProcessors() * 2,  // 核心线程数
+            Runtime.getRuntime().availableProcessors() * 4,  // 最大线程数
+            60,  // 空闲线程存活时间
+            TimeUnit.SECONDS,  // 时间单位
+            new LinkedBlockingQueue<>(100),  // 任务队列（避免队列无界导致内存溢出）
+            Executors.defaultThreadFactory(),  // 线程工厂
+            new ThreadPoolExecutor.AbortPolicy()  // 拒绝策略（任务满时抛异常，便于监控）
+    );
+
+    private File file = new File("E:\\ideawork\\SeekingLight\\files\\chat.txt");
 
     private String role;
 
@@ -39,7 +53,7 @@ public abstract class BaseModelChatClient {
 
     public abstract String getApiKey();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         List<String> rules = Arrays.asList(
                 "是一个构思精妙绝伦的悬疑故事,故事中往往会揭露复杂的人性，并有不同的人物怀揣着不同的目的参与其中，尽量用人名，至少出现5个人物，通过人物对话推动情节",
                 "对话要有换行,每个段落的开头遵循标准的小说格式，开头留2个空格,使用html语法，段落用<p>,标题用<h1>,对话用<p>",
@@ -57,56 +71,87 @@ public abstract class BaseModelChatClient {
         String role = "你是一名思想天马行空的资深悬疑小说作家，你擅长构思精妙绝伦的悬疑故事，并拥有独特的工作步骤来完成构思";
         String question = "根据提示，写一个故事，提示: 三国里有个吃人的大汉天子";
         String result = new OllamaClient().chat(rules, question, role, 3);
-        log.info("最终结果: \n{}",result);
+        log.info("最终结果: \n{}", result);
     }
 
-    public String chat(List<String> rules,String question,String role,int checkNum){
-        BaseModelChatClient mainUser = ModelManager.getModel(getType(),role);
+    public String chat(List<String> rules, String question, String role, int checkNum) {
+        BaseModelChatClient mainUser = ModelManager.getModel(getType(), role);
         String mainUserAnswer = "";
         String finalQuestion = "";
-        for(int i = 0 ;i<checkNum;i++){
-            StringBuffer finalQuestionSb =new StringBuffer(question).append("\n你的回答需要满足下面规则:\n");
-            for(int k = 0 ;k<rules.size();k++){
-                finalQuestionSb.append((k+1)+". "+ rules.get(k)).append("\n");
+        for (int i = 0; i < checkNum; i++) {
+            StringBuffer finalQuestionSb = new StringBuffer(question).append("\n你的回答需要满足下面规则:\n");
+            for (int k = 0; k < rules.size(); k++) {
+                finalQuestionSb.append((k + 1) + ". " + rules.get(k)).append("\n");
             }
             finalQuestion = finalQuestionSb.toString();
 
-            //SeekFileUtils.writeLines(file, Arrays.asList(String.format("问 [%s] : \n%s\n",mainUser.getRole(),finalQuestion)),true);
+            SeekFileUtils.writeLines(file, Arrays.asList(String.format("问 [%s] : \n%s\n", mainUser.getRole(), finalQuestion)), true);
             mainUserAnswer = mainUser.chat(finalQuestion);
-            //SeekFileUtils.writeLines(file, Arrays.asList(String.format("[%s] 答: \n%s\n",mainUser.getRole(),mainUserAnswer)),true);
-            StringBuffer suggestion = new StringBuffer();
-            for(int j = 0 ;j<rules.size();j++){
-                BaseModelChatClient checkUser = ModelManager.getModel(getType(),role+(j+1));
-                String checkQuestion = String.format("你是一个%s,请检查下面的内容:%s\n" +
-                                "是否满足规则: %s,请记住：满足则返回\"\"，不满足从专业的角度给出对应的建议给出对应的1-3条建议,要求在300字内。请记住，不要扩散。" +
-                                "不展示任何思考过程、推导步骤或解释性前言，普通文本即可，不要加上html或者markdown等语法"
-                        , role, mainUserAnswer, rules.get(j));
-                String checkResult = checkUser.chat(checkQuestion);
-                suggestion.append(checkResult+"\n");
-            }
-            question = String.format("你之前的答案是:%s\n,请根据我另外一个作家朋友的建议:%s\n" +
+            SeekFileUtils.writeLines(file, Arrays.asList(String.format("[%s] 答: \n%s\n", mainUser.getRole(), mainUserAnswer)), true);
+            //获取建议
+            String suggestion = getSuggestion(rules,mainUserAnswer,role);
+            question = String.format("你之前的答案是:%s\n,请根据我另外一个专家朋友的建议:%s\n" +
                             "请在原答案的基础上优化内容，如偏差较大可以重新生成"
                     , mainUserAnswer, suggestion);
         }
         return mainUserAnswer;
     }
 
-    public  String chat(String question) {
-        log.info("问题: "+ question);
-        question = question+"/no_think";
+    private String getSuggestion(List<String> rules,String mainUserAnswer,String role){
+        StringBuffer suggestion = new StringBuffer();
+        List<Callable<String>> tasks = new ArrayList<>();
+        for (int j = 0; j < rules.size(); j++) {
+            int index = j;
+            String finalMainUserAnswer = mainUserAnswer;
+            tasks.add(() -> {
+                // 每个任务内执行：获取模型 -> 构建问题 -> 调用 chat 方法
+                BaseModelChatClient checkUser = ModelManager.getModel(getType(), role + (index + 1));
+                String checkQuestion = String.format(
+                        "你是一个%s,请检查下面的内容:%s\n" +
+                                "是否满足规则: %s,请记住：满足则返回\"\",不要回复其他字符，不满足从专业的角度给出对应的建议给出对应的1-3条建议,要求在300字内。请记住，不要扩散。" +
+                                "不展示任何思考过程、推导步骤或解释性前言，普通文本即可，不要加上html或者markdown等语法",
+                        role, finalMainUserAnswer, rules.get(index)
+                );
+                // 执行 chat 调用并返回结果（若执行异常，此处会抛出）
+                return checkUser.chat(checkQuestion);
+            });
+        }
+        try {
+            // 3. 提交所有任务并获取 Future 列表（Future 用于接收异步结果）
+            List<Future<String>> futureList = executor.invokeAll(tasks);
+
+            // 4. 遍历 Future 列表，获取每个任务的结果并拼接到 suggestion
+            for (Future<String> future : futureList) {
+
+                // 获取结果（若任务未完成，会阻塞直到完成；若任务异常，会抛出 ExecutionException）
+                String checkResult = future.get();
+                // 拼接结果（每个结果后加换行，与原逻辑一致）
+                if (checkResult != null && !checkResult.isEmpty()) {
+                    suggestion.append(checkResult).append("\n");
+                }
+            }
+        } catch (Exception e) {
+            log.error("error===>", e);
+        }
+        return suggestion.toString();
+    }
+
+    public String chat(String question) {
+        log.info("问题: " + question);
+        question = question + "/no_think";
         List<ChatMessage> messages = new ArrayList<>();
-        messages.add(new ChatMessage("system", role==null?"你是一个高级AI助手,迅速回答用户问题":role));
+        messages.add(new ChatMessage("system", role == null ? "你是一个高级AI助手,迅速回答用户问题" : role));
         messages.add(new ChatMessage("user", question));
         String chat = chat(messages);
-        log.info("答案: "+ chat);
+        log.info("答案: " + chat);
         return chat;
     }
 
 
-    public  String chat(String question, String ragInfo) {
-        question = question+"/no_think";
-        log.info("问题: "+ question);
-        log.info("ragInfo: "+ ragInfo);
+    public String chat(String question, String ragInfo) {
+        question = question + "/no_think";
+        log.info("问题: " + question);
+        log.info("ragInfo: " + ragInfo);
         if (ragInfo == null) {
             return chat(question);
         }
@@ -114,15 +159,15 @@ public abstract class BaseModelChatClient {
         messages.add(new ChatMessage("system", ragInfo));
         messages.add(new ChatMessage("user", question));
         String result = chat(messages);
-        log.info("答案: "+ result);
+        log.info("答案: " + result);
         return result;
     }
 
-    public  String chat(List<ChatMessage> messages) {
+    public String chat(List<ChatMessage> messages) {
         try {
             // 构建Ollama请求体，包含模型名、消息和流式响应设置
             JSONObject requestBodyJson = new JSONObject();
-            requestBodyJson.put("model", getModel() );
+            requestBodyJson.put("model", getModel());
             requestBodyJson.put("messages", messages);
             requestBodyJson.put("stream", false); // 设置为false，获取完整响应，而非流式输出
 
@@ -144,7 +189,8 @@ public abstract class BaseModelChatClient {
 
             // 4. 发送请求并获取响应
             log.info("\n正在请求模型: " + getModel() + " ...");
-            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = httpClient.
+                    send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
             // 5. 处理响应结果
             return handleResponse(response);
@@ -159,13 +205,13 @@ public abstract class BaseModelChatClient {
     /**
      * 处理Ollama API响应，提取模型生成的内容
      */
-    public   String handleResponse(HttpResponse<String> response) {
+    public String handleResponse(HttpResponse<String> response) {
         int statusCode = response.statusCode();
         String responseBody = response.body();
         if (statusCode == 200) {
             String answer = getAnswer(responseBody);
             int lastSlashIndex = answer.lastIndexOf("</think>");
-            if(lastSlashIndex!=-1){
+            if (lastSlashIndex != -1) {
                 answer = answer.substring(lastSlashIndex + 8);
             }
             return answer;
@@ -179,7 +225,7 @@ public abstract class BaseModelChatClient {
         return "";
     }
 
-    public String getAnswer(String responseBody){
+    public String getAnswer(String responseBody) {
         JSONObject jsonObject = JSON.parseObject(responseBody);
         // 直接从根节点获取message对象
         JSONObject messageObject = jsonObject.getJSONObject("message");
