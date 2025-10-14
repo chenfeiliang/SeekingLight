@@ -1,21 +1,18 @@
 package seekLight.controller;
 
-import com.alibaba.fastjson.JSONArray;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import seekLight.config.ThreadPools;
 import seekLight.entity.WorkFlow;
-import seekLight.service.model.OllamaClient;
 import seekLight.service.toutiao.ToutiaoRecommendQuestionJsoup;
+import seekLight.service.zhihu.ZhihuApiFetcher;
 import seekLight.service.zhihu.ZhihuHotListCrawler;
 import seekLight.service.zhihu.ZhihuHotRankFetcher;
 import seekLight.utils.SnowflakeUtils;
 import seekLight.workflow.context.WorkFlowContext;
 import seekLight.workflow.engine.impl.WorkFlowCreditEngine;
-import seekLight.service.zhihu.ZhihuApiFetcher;
-import lombok.extern.slf4j.Slf4j;
 import seekLight.workflow.service.impl.WorkFlowServiceImpl;
 
 import javax.validation.constraints.NotBlank;
@@ -111,10 +108,44 @@ public class MainController {
     // @NotBlank 注解：校验 busiSno 不为空（需配合 Spring Validation 依赖）
     public String retryFlow(@RequestParam(value = "busiSno", required = true)
                                    @NotBlank(message = "业务编号 busiSno 不能为空") String busiSno) {
-        //20251011142213764734586595840000
+            //20251011142213764734586595840000
         WorkFlowContext flow = workFlowService.getFlow(busiSno);
         workFlowCreditEngine.doFlow(flow);
         return "retryFlow";
     }
+
+
+    @ResponseBody
+    @GetMapping("/test") // GET 请求方式，符合查询/触发类接口设计
+    // @NotBlank 注解：校验 busiSno 不为空（需配合 Spring Validation 依赖）
+    public String test() {
+        ThreadPools.executor.execute(()->{
+            WorkFlow workFlow = new WorkFlow();
+            workFlow.setBusiSno(SnowflakeUtils.nextId());
+            workFlow.setStep("");
+            workFlow.setRoute("GeneratorOutline,GeneratorDetailedOutline,GeneratorAllArticle");
+            WorkFlowContext flowContext = new WorkFlowContext(workFlow);
+            flowContext.putParam("Generator_title", "我还是亵渎了神明");
+            flowContext.putParam("Generator_questionId", "");
+            workFlowCreditEngine.doFlow(flowContext);
+        });
+        return "test";
+    }
+
+    /**
+     * 头条推荐问题重试接口（GET 方式）
+     * @param busiSno 业务编号（必传，用于标识具体重试业务场景）
+     * @return 接口响应提示
+     */
+    @ResponseBody
+        @GetMapping("/getArticle") // GET 请求方式，符合查询/触发类接口设计
+    // @NotBlank 注解：校验 busiSno 不为空（需配合 Spring Validation 依赖）
+    public String getArticle(@RequestParam(value = "busiSno", required = true)
+                            @NotBlank(message = "业务编号 busiSno 不能为空") String busiSno) {
+        //20251011142213764734586595840000
+        WorkFlowContext flow = workFlowService.getFlow(busiSno);
+        return flow.getParam("GeneratorAllArticleConvert_sourceContent");
+    }
+
 
 }

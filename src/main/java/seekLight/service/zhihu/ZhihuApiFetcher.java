@@ -141,14 +141,22 @@ public class ZhihuApiFetcher {
                     log.info("标题: " + title);
                     log.info("questionId: " + questionId);
                     log.info("内容: " + target.getExcerpt());
+//                    WorkFlow workFlow = new WorkFlow();
+//                    workFlow.setBusiSno( SnowflakeUtils.nextId());
+//                    workFlow.setStep("");
+//                    workFlow.setRoute("judgeType,zhihuGenerator,zhiHuPublish");//
+//                    WorkFlowContext flowContext = new WorkFlowContext(workFlow);
+//                    flowContext.putParam("zhiHuGenerator_title", title);
+//                   // flowContext.putParam("zhiHuGenerator_excerpt", target.getExcerpt());
+//                    flowContext.putParam("zhiHuPublish_questionId",questionId);
+
                     WorkFlow workFlow = new WorkFlow();
-                    workFlow.setBusiSno( SnowflakeUtils.nextId());
+                    workFlow.setBusiSno(SnowflakeUtils.nextId());
                     workFlow.setStep("");
-                    workFlow.setRoute("judgeType,zhihuGenerator,zhiHuPublish");//
+                    workFlow.setRoute("GeneratorOutline,GeneratorDetailedOutline,GeneratorAllArticle,GeneratorAllArticleConvert");
                     WorkFlowContext flowContext = new WorkFlowContext(workFlow);
-                    flowContext.putParam("zhiHuGenerator_title", title);
-                   // flowContext.putParam("zhiHuGenerator_excerpt", target.getExcerpt());
-                    flowContext.putParam("zhiHuPublish_questionId",questionId);
+                    flowContext.putParam("Generator_title", title);
+                    flowContext.putParam("Generator_questionId", questionId);
                     workFlowCreditEngine.doFlow(flowContext);
                     set.add(questionId);
                 }

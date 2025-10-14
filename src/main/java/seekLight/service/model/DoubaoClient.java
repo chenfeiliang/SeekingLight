@@ -34,7 +34,7 @@ public class DoubaoClient extends BaseModelChatClient{
     private static final String API_URL = "https://ark.cn-beijing.volces.com/api/v3/chat/completions";
 
     // 你希望调用的豆包模型名称
-    private static final String MODEL = "doubao-seed-1-6-thinking-250715";
+    private static final String MODEL = " doubao-seed-1-6-250615";//doubao-seed-1-6-thinking-250715
 
     @Override
     public String getModel() {

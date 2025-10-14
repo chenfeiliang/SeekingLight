@@ -22,18 +22,6 @@ import java.util.concurrent.*;
 @Slf4j
 public abstract class BaseModelChatClient {
 
-    // 1. 定义线程池（建议作为类级别的静态变量，避免频繁创建/销毁线程）
-    // 核心线程数：根据 CPU 核心数配置（一般为 CPU 核心数 * 2），可根据业务调整
-    private static final ExecutorService executor = new ThreadPoolExecutor(
-            Runtime.getRuntime().availableProcessors() * 2,  // 核心线程数
-            Runtime.getRuntime().availableProcessors() * 4,  // 最大线程数
-            60,  // 空闲线程存活时间
-            TimeUnit.SECONDS,  // 时间单位
-            new LinkedBlockingQueue<>(100),  // 任务队列（避免队列无界导致内存溢出）
-            Executors.defaultThreadFactory(),  // 线程工厂
-            new ThreadPoolExecutor.AbortPolicy()  // 拒绝策略（任务满时抛异常，便于监控）
-    );
-
     private File file = new File("E:\\ideawork\\SeekingLight\\files\\chat.txt");
 
     private String role;
@@ -65,17 +53,17 @@ public abstract class BaseModelChatClient {
                         "三星堆青铜树实为扶桑神木的投影;从史册到神坛的跨越,如：悲剧型英雄：项羽乌江自刎改写为血祭楚魂，残兵化作永不沉没的阴兵战船",
                 "重要历史人物核心事件保留（如诸葛亮北伐），必须保留百分40的历史人物和情节再改编,不要政治正确，不要出现太多的他的字眼，不要歌颂类文字",
                 "请记住：回答问题不要使用markdown的形式，不要出现**,###的字眼，要使用普通的文本，出现的标点符号必须完整，正确",
-                "3000字以上，请保证故事有头有尾，,必须要有一个完整的结局,内容里面尽量不要重复，不要完全脱离历史,开头参考现有的经典悬疑小说开头范例,该文章要有一个题目用<h1></h1>包裹"
+                "100字以上，请保证故事有头有尾，,必须要有一个完整的结局,内容里面尽量不要重复，不要完全脱离历史,开头参考现有的经典悬疑小说开头范例,该文章要有一个题目用<h1></h1>包裹"
         );
 
         String role = "你是一名思想天马行空的资深悬疑小说作家，你擅长构思精妙绝伦的悬疑故事，并拥有独特的工作步骤来完成构思";
         String question = "根据提示，写一个故事，提示: 三国里有个吃人的大汉天子";
-        String result = new OllamaClient().chat(rules, question, role, 3);
+        String result = new OllamaClient(role,"qwen3:8b").chat(rules, question, role, 3);
         log.info("最终结果: \n{}", result);
     }
 
     public String chat(List<String> rules, String question, String role, int checkNum) {
-        BaseModelChatClient mainUser = ModelManager.getModel(getType(), role);
+        BaseModelChatClient mainUser = ModelManager.getModel(getType(), role,getModel());
         String mainUserAnswer = "";
         String finalQuestion = "";
         for (int i = 0; i < checkNum; i++) {
@@ -98,6 +86,9 @@ public abstract class BaseModelChatClient {
     }
 
     private String getSuggestion(List<String> rules,String mainUserAnswer,String role){
+        ExecutorService executor = Executors.newFixedThreadPool(
+                rules.size(),  // 固定线程数（核心=最大）
+                Executors.defaultThreadFactory()) ; // 线程工厂（与原逻辑一致）
         StringBuffer suggestion = new StringBuffer();
         List<Callable<String>> tasks = new ArrayList<>();
         for (int j = 0; j < rules.size(); j++) {
@@ -105,15 +96,20 @@ public abstract class BaseModelChatClient {
             String finalMainUserAnswer = mainUserAnswer;
             tasks.add(() -> {
                 // 每个任务内执行：获取模型 -> 构建问题 -> 调用 chat 方法
-                BaseModelChatClient checkUser = ModelManager.getModel(getType(), role + (index + 1));
+                BaseModelChatClient checkUser = ModelManager.getModel("ollama", role + (index + 1),"qwen3:1.7b");
                 String checkQuestion = String.format(
-                        "你是一个%s,请检查下面的内容:%s\n" +
-                                "是否满足规则: %s,请记住：满足则返回\"\",不要回复其他字符，不满足从专业的角度给出对应的建议给出对应的1-3条建议,要求在300字内。请记住，不要扩散。" +
-                                "不展示任何思考过程、推导步骤或解释性前言，普通文本即可，不要加上html或者markdown等语法",
+                        "你是一个%s，仅给建议不创作,请检查下面的内容:%s\n" +
+                                "是否满足规则: %s,请记住：满足则返回\"\",不满足从专业的角度给出对应的建议给出对应的1-3条建议" +
+                                "不要回复其他字符，不要直接给出优化结果,要求在300字内。请记住，不要扩散。\n" +
+                                "不展示任何思考过程、推导步骤或解释性前言，普通文本即可，不要加上html或者markdown等语法。\n" +
+                                "你的回答的内容格式必须为下面两种格式二选一: \n" +
+                                "1. \"\"\n" +
+                                "2. 我的建议是:XXXXXXX\n",
                         role, finalMainUserAnswer, rules.get(index)
                 );
                 // 执行 chat 调用并返回结果（若执行异常，此处会抛出）
-                return checkUser.chat(checkQuestion);
+                String chat = checkUser.chat(checkQuestion);
+                return chat;
             });
         }
         try {
@@ -170,6 +166,11 @@ public abstract class BaseModelChatClient {
             requestBodyJson.put("model", getModel());
             requestBodyJson.put("messages", messages);
             requestBodyJson.put("stream", false); // 设置为false，获取完整响应，而非流式输出
+            // 新增：推理参数（关键步骤）
+            requestBodyJson.put("temperature", 0.7);
+            requestBodyJson.put("top_p", 0.9);
+            // 新增：防重复参数（强烈建议添加，解决你之前遇到的重复问题）
+            requestBodyJson.put("repetition_penalty", 1.2);
 
             String requestBody = requestBodyJson.toString();
             //log.info("请求体：\n" + JSON.toJSONString(JSON.parseObject(requestBody), true));

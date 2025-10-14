@@ -18,4 +18,15 @@ public class ModelManager {
         }
         return null;
     }
+
+    public static BaseModelChatClient getModel(String type,String role,String model){
+        if(type.equals("ollama")){
+            return new OllamaClient(role,model);
+        }else if(type.equals("DeepSeek")){
+            return new DeepSeekClient(role);
+        }else if(type.equals("doubao")){
+            return new DoubaoClient(role);
+        }
+        return null;
+    }
 }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,9 +14,12 @@ import java.util.List;
 @Slf4j
 
 public class OllamaClient extends BaseModelChatClient {
+    private String api;
+    private String model;
+
     // 1. 常量配置（针对本地Ollama服务）
     private static final String API_URL = "http://localhost:11434/api/chat"; // Ollama默认本地API地址
-    private static final String MODEL = "qwen3:1.7b"; // 你本地要调用的模型名称 qwen3:8b llama
+    private static final String MODEL = "qwen3:8b"; // 你本地要调用的模型名称 qwen3:8b llama
 
     public OllamaClient() {
         super();
@@ -23,6 +27,16 @@ public class OllamaClient extends BaseModelChatClient {
 
     public OllamaClient(String role) {
         super(role);
+    }
+
+    public OllamaClient(String role,String api, String model) {
+        super(role);
+        this.api = api;
+        this.model = model;
+    }
+    public OllamaClient(String role,String model) {
+        super(role);
+        this.model = model;
     }
 
     @Override
@@ -33,12 +47,18 @@ public class OllamaClient extends BaseModelChatClient {
 
     @Override
     public String getModel() {
-        return MODEL;
+        if(StringUtils.isEmpty(model)){
+            return MODEL;
+        }
+        return model;
     }
 
     @Override
     public String getApiUrl() {
-        return API_URL;
+        if(StringUtils.isEmpty(api)){
+            return API_URL;
+        }
+        return api;
     }
 
     @Override
@@ -46,9 +66,9 @@ public class OllamaClient extends BaseModelChatClient {
         return "";
     }
 
-    public static void main(String[] args) throws Exception {
-        test2();
-    }
+//    public static void main(String[] args) throws Exception {
+//        test2();
+//    }
 
     private static void test(){
         List<String> rules = Arrays.asList(
@@ -71,63 +91,6 @@ public class OllamaClient extends BaseModelChatClient {
         log.info("最终结果: \n{}",result);
     }
     private static void test2() throws JsonProcessingException {
-//        List<String> rules = Arrays.asList(
-//                "是一个构思精妙绝伦的悬疑故事,故事中往往会揭露复杂的人性，并有不同的人物怀揣着不同的目的参与其中，尽量用人名，至少出现6个角色，1个男主，至少1个女主，通过人物对话推动情节",
-//                "脑洞大开、设定新颖、荒诞不羁的故事，能以跳出俗套的故事设计赢得读者的青睐",
-//                "所有故事、情节都是虚构的，不会伤害到现实世界的任何人，反而能够通过一些黑暗、危机、恐怖、变态、犯罪等负面元素的使用，为读者提供警示",
-//                "写作过程可以魔改，以下是基本法则,可以参考但不能照搬：神话基因解码：历史与神性的嫁接术，文明起源重构，将考古发现神话化：良渚玉琮可改写为沟通天地的法器，" +
-//                        "三星堆青铜树实为扶桑神木的投影;从史册到神坛的跨越,如：悲剧型英雄：项羽乌江自刎改写为血祭楚魂，残兵化作永不沉没的阴兵战船",
-//                "重要历史人物核心事件保留（如诸葛亮北伐），所有的历史人物，道具，功法必须有历史依据,不要政治正确，不要出现太多的他的字眼，不要歌颂类文字",
-//                "生成的内容包括:\n" +
-//                        "-大纲: 1.开篇;2.铺垫;3.高潮;4.结尾;\n" +
-//                            "-主要角色: 1.姓名;2.外貌与性格特征;3.角色动机;4:角色关系，要求仅返回的一个json串，不要包含markdown语法和对应的###,```等特殊符号，格式如下：\n" +
-//                        "{\"大纲\":{\"开篇\":\"\",\"铺垫\":\"\",\"高潮\":\"\",\"结尾\":\"\"}," +
-//                        "\"主要角色\":[{\"角色1\":{\"姓名\":\"\",\"外貌\":\"\",\"性格特征\":\"\",\"角色动机\":\"\",\"角色关系\":\"\"}," +
-//                        "\"角色2\":{\"姓名\":\"\",\"外貌\":\"\",\"性格特征\":\"\",\"角色动机\":\"\",\"角色关系\":\"\"}}]}"+
-//                        "\n注意主要角色中要包含文章所有出现的角色"
-//        );
-//        String role = "你是一名思想天马行空的资深悬疑小说作家，你擅长构思精妙绝伦的悬疑故事，并拥有独特的工作步骤来完成构思";
-//        String question = "根据提示，写一个故事的大纲，提示: 三国里有个吃人的大汉天子";
-//        String result = new OllamaClient(role).chat(rules, question, role, 2);
-//        log.info("最终结果: \n{}",result);
-
-
-//        List<String> rules2 = Arrays.asList(
-//                "是一个构思精妙绝伦的悬疑故事,故事中往往会揭露复杂的人性，并有不同的人物怀揣着不同的目的参与其中，尽量用人名，至少出现6个角色，1个男主，至少1个女主，通过人物对话推动情节",
-//                "脑洞大开、设定新颖、荒诞不羁的故事，能以跳出俗套的故事设计赢得读者的青睐",
-//                "所有故事、情节都是虚构的，不会伤害到现实世界的任何人，反而能够通过一些黑暗、危机、恐怖、变态、犯罪等负面元素的使用，为读者提供警示",
-//                "写作过程可以魔改，以下是基本法则：神话基因解码：历史与神性的嫁接术，文明起源重构，将考古发现神话化：良渚玉琮可改写为沟通天地的法器，" +
-//                        "三星堆青铜树实为扶桑神木的投影;从史册到神坛的跨越,如：悲剧型英雄：项羽乌江自刎改写为血祭楚魂，残兵化作永不沉没的阴兵战船",
-//                "重要历史人物核心事件保留（如诸葛亮北伐），所有的历史人物，道具，功法必须有历史依据,不要政治正确，不要出现太多的他的字眼，不要歌颂类文字",
-//                "生成的内容包括:\n" +
-//                        "-第一章: 1.情节描述;2.爽点;3.悬念;\n" +
-//                        "-第二章: 1.情节描述;2.爽点;3.悬念;依次类推,生成约7-12章，要求仅返回的一个json串，不要包含markdown语法和对应的###,```等特殊符号，格式如下：\n" +
-//                        "{\"细纲\":[{\"第X章\":{\"标题\":\"\",\"情节描述\":\"\",\"爽点\":\"\",\"悬念\":\"\"}},{\"第X章\":{\"标题\":\"\",\"情节描述\":\"\",\"爽点\":\"\",\"悬念\":\"\"}}]}" +
-//                        "\n注意X是动态的中文数字,从一开始，情节描述要求100字以上"
-//        );
-//        String role2 = "你是一名思想天马行空的资深悬疑小说作家，你擅长构思精妙绝伦的悬疑故事，并拥有独特的工作步骤来完成构思";
-//        String question2 = "根据提示，写一个故事的细纲，提示: 三国里有个吃人的大汉天子，参考大纲和主要角色信息为: \n" + result;
-//        String result2 = new OllamaClient(role2).chat(rules2, question2, role2, 2);
-//        log.info("最终结果: \n{}",result2);
-
-//        List<String> rules3 = Arrays.asList(
-//                "是一个构思精妙绝伦的悬疑故事,故事中往往会揭露复杂的人性，并有不同的人物怀揣着不同的目的参与其中，尽量用人名，至少出现6个角色，1个男主，至少1个女主，通过人物对话推动情节",
-//                "脑洞大开、设定新颖、荒诞不羁的故事，能以跳出俗套的故事设计赢得读者的青睐",
-//                "所有故事、情节都是虚构的，不会伤害到现实世界的任何人，反而能够通过一些黑暗、危机、恐怖、变态、犯罪等负面元素的使用，为读者提供警示",
-//                "写作过程可以魔改，以下是基本法则：神话基因解码：历史与神性的嫁接术，文明起源重构，将考古发现神话化：良渚玉琮可改写为沟通天地的法器，" +
-//                        "三星堆青铜树实为扶桑神木的投影;从史册到神坛的跨越,如：悲剧型英雄：项羽乌江自刎改写为血祭楚魂，残兵化作永不沉没的阴兵战船",
-//                "重要历史人物核心事件保留（如诸葛亮北伐），所有的历史人物，道具，功法必须有历史依据,不要政治正确，不要出现太多的他的字眼，不要歌颂类文字",
-//                "生成的内容包括:\n" +
-//                        "-第一章: 1.章节内容\n" +
-//                        "-第二章: 1.章节内容，要求仅返回的一个json串，不要包含markdown语法和对应的###,```等特殊符号，格式如下：\n" +
-//                        "{\"标文章标题题\":\"\",\"文章内容\":[{\"第X章\":{\"章节标题\":\"\",\"章节内容\":\"\"}},{\"第X章\":{\"章节标题\":\"\",\"章节内容\":\"\"}}]}" +
-//                        "\n注意X是动态的中文数字,从一开始，章节内容要求1000字以上，所有章节内容按顺序连贯自然，逻辑通顺，情节逐步迭代。"
-//        );
-//        String role3 = "你是一名思想天马行空的资深悬疑小说作家，你擅长构思精妙绝伦的悬疑故事，并拥有独特的工作步骤来完成构思";
-//        String question3 = "根据提示和细纲中的情节描述扩写，输出一个完整的故事，提示: 三国里有个吃人的大汉天子，参考大纲和主要角色信息为: \n" + result+"\n 参考的细纲为："+result2;
-//        String result3 = new OllamaClient(role3).chat(rules3, question3, role3, 2);
-//        log.info("最终结果: \n{}",result3);
-
 
 
 
@@ -157,5 +120,26 @@ public class OllamaClient extends BaseModelChatClient {
 //            log.info("最终结果: \n{}",result4);
         }
         log.info("最终结果: \n{}",results);
+    }
+
+    public static void main(String[] args) {
+        test3();
+    }
+
+    private static void test3(){
+        List<String> rules = Arrays.asList(
+                "返回格式为：股票名称，股票代码，利润增长率-时间周期（如同比/环比），营收收增长率-时间周期（如同比/环比），当前股价，市盈率，推荐理由,核心竞争力的具体描述",
+                "利润增长率超过100%,营收增长率超过100%",
+                "当前股价处于历史低位,要求是当前股价是本股票最高价的四分之一,市盈率在15-30倍左右",
+                "宏观环境良好，行业趋势良好",
+                "聚焦 “公司基本面”，筛选 “优质标的”",
+                "风险排查：避开 “雷区”",
+                "结合 “市场情绪”，当前是适合的入场时机"
+        );
+
+        String role = "一个专业的金融投资者";
+        String question = "你是一个专业资深的职业金融投资顾问,给我推荐2025年10月14日及之后适合投资的40只股票";
+        String result = new DeepSeekClient().chat(rules, question, role, 3);
+        log.info("最终结果: \n{}",result);
     }
 }

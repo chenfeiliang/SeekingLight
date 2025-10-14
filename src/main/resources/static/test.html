@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>天帝之子与铁甲将军的血色预言</title>
+    <style>
+        /* 基础样式设置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", "Heiti SC", serif;
+            background-color: #0f0e17;
+            color: #e0e0e0;
+            line-height: 1.8;
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* 标题样式 */
+        h1 {
+            text-align: center;
+            color: #ff4d4d;
+            font-size: 2.5rem;
+            margin: 40px 0 60px;
+            text-shadow: 0 0 15px rgba(255, 77, 77, 0.5);
+            border-bottom: 2px solid #ff4d4d;
+            padding-bottom: 20px;
+        }
+
+        h2 {
+            color: #ff9e80;
+            font-size: 1.8rem;
+            margin: 50px 0 30px;
+            padding-left: 20px;
+            border-left: 4px solid #ff9e80;
+        }
+
+        /* 段落样式 */
+        p {
+            margin: 18px 0;
+            text-indent: 2em;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        p:hover {
+            color: #f5f5f5;
+            transform: translateX(5px);
+        }
+
+        /* 加载/错误状态样式 */
+        .status-container {
+            text-align: center;
+            margin-top: 80px;
+            padding: 30px;
+            border-radius: 8px;
+            background-color: rgba(30, 28, 43, 0.8);
+        }
+
+        .loading {
+            font-size: 1.5rem;
+            color: #ff9e80;
+        }
+
+        .error {
+            font-size: 1.5rem;
+            color: #ff4d4d;
+        }
+
+        .retry-btn {
+            margin-top: 20px;
+            padding: 10px 25px;
+            font-size: 1rem;
+            color: #fff;
+            background-color: #ff4d4d;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .retry-btn:hover {
+            background-color: #e03d3d;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+                margin: 30px 0 40px;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+                margin: 40px 0 25px;
+            }
+
+            p {
+                font-size: 1rem;
+                text-indent: 1.5em;
+            }
+
+            body {
+                padding: 15px;
+            }
+
+            .status-container {
+                margin-top: 50px;
+                padding: 20px;
+            }
+
+            .loading, .error {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* 章节分隔线 */
+        .chapter-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #ff4d4d, transparent);
+            margin: 60px 0;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+<!-- 初始加载状态 -->
+<div class="status-container" id="statusContainer">
+    <div class="loading" id="loadingText">正在请求接口加载小说内容...</div>
+</div>
+
+<script>
+        // 接口地址
+        const articleApi = 'http://localhost:8080/getArticle?busiSno=20251012034643764937047172452352';
+        // DOM元素
+        const bodyElement = document.body;
+        const statusContainer = document.getElementById('statusContainer');
+        const loadingText = document.getElementById('loadingText');
+
+        // 发起GET请求获取文章内容
+        async function fetchArticleContent() {
+            try {
+                // 发起请求（可根据接口要求添加headers）
+                const response = await fetch(articleApi, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'text/html;charset=UTF-8', // 假设接口返回HTML文本，可根据实际调整
+                        // 若接口需要认证等信息，可在此添加headers，例如：
+                        // 'Authorization': 'Bearer your-token'
+                    },
+                    credentials: 'same-origin' // 若接口需要携带cookie，添加此配置
+                });
+
+                // 检查响应状态
+                if (!response.ok) {
+                    throw new Error(`接口请求失败，状态码: ${response.status} (${response.statusText})`);
+                }
+
+                // 假设接口返回的是HTML格式文本（根据实际接口返回类型调整：text()/json()）
+                // 若接口返回JSON格式（如 { "content": "<h1>...</h1>" }），则使用 const data = await response.json(); 再取data.content
+                const htmlContent = await response.text();
+
+                // 验证返回内容是否有效
+                if (!htmlContent.trim()) {
+                    throw new Error('接口返回内容为空');
+                }
+
+                // 清空状态容器，填充接口返回的HTML内容
+                bodyElement.innerHTML = htmlContent;
+
+            } catch (error) {
+                // 捕获错误并显示错误信息
+                statusContainer.innerHTML = `
+                    <div class="error">加载失败: ${error.message}</div>
+                    <button class="retry-btn" onclick="fetchArticleContent()">点击重试</button>
+                `;
+                console.error('接口请求错误详情:', error);
+            }
+        }
+
+        // 页面加载完成后立即发起请求
+        window.addEventListener('DOMContentLoaded', fetchArticleContent);
+    </script>
+</body>
+</html>
