@@ -142,4 +142,6 @@ public class OllamaClient extends BaseModelChatClient {
         String result = new DeepSeekClient().chat(rules, question, role, 3);
         log.info("最终结果: \n{}",result);
     }
+
+
 }

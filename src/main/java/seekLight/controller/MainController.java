@@ -1,6 +1,7 @@
 package seekLight.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -144,7 +145,7 @@ public class MainController {
                             @NotBlank(message = "业务编号 busiSno 不能为空") String busiSno) {
         //20251011142213764734586595840000
         WorkFlowContext flow = workFlowService.getFlow(busiSno);
-        return flow.getParam("GeneratorAllArticleConvert_sourceContent");
+        return StringUtils.defaultIfBlank(flow.getParam("GeneratorAllArticleConvert_sourceContent"),flow.getParam("zhiHuPublish_content"));
     }
 
 
