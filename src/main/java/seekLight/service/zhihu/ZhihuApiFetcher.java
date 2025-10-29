@@ -2,6 +2,7 @@ package seekLight.service.zhihu;
 
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.lang.StringUtils;
+import seekLight.utils.CacheUtils;
 import seekLight.utils.SnowflakeUtils;
 import seekLight.workflow.context.WorkFlowContext;
 import seekLight.workflow.engine.impl.WorkFlowCreditEngine;
@@ -123,42 +124,51 @@ public class ZhihuApiFetcher {
             log.info("成功获取到 " + items.size() + " 条推荐内容：");
             log.info("----------------------------------------");
             for (FeedItem item : items) {
-                Target target = item.getTarget();
-                if (target != null) {
-                    String questionId = getQuestionId(target.getUrl());
-                    String title = target.getTitle();
-                    if(Objects.nonNull(target.getQuestion())){
-                        questionId = getQuestionId(target.getQuestion().getUrl());
-                    }
-                    if(Objects.nonNull(target.getQuestion())){
-                        title = getQuestionId(target.getQuestion().getTitle());
-                    }
-                    if(set.contains(questionId)){
-                        continue;
-                    }
-                    log.info("ID: " + target.getId());
-                    log.info("类型: " + target.getType());
-                    log.info("标题: " + title);
-                    log.info("questionId: " + questionId);
-                    log.info("内容: " + target.getExcerpt());
-//                    WorkFlow workFlow = new WorkFlow();
-//                    workFlow.setBusiSno( SnowflakeUtils.nextId());
-//                    workFlow.setStep("");
-//                    workFlow.setRoute("judgeType,zhihuGenerator,zhiHuPublish");//
-//                    WorkFlowContext flowContext = new WorkFlowContext(workFlow);
-//                    flowContext.putParam("zhiHuGenerator_title", title);
-//                   // flowContext.putParam("zhiHuGenerator_excerpt", target.getExcerpt());
-//                    flowContext.putParam("zhiHuPublish_questionId",questionId);
+                try {
+                    Target target = item.getTarget();
+                    if (target != null) {
+                        String questionId = getQuestionId(target.getUrl());
+                        String title = target.getTitle();
+                        if(Objects.nonNull(target.getQuestion())){
+                            questionId = getQuestionId(target.getQuestion().getUrl());
+                        }
+                        if(CacheUtils.questionSet.contains(questionId)){
+                            continue;
+                        }
+                        if(Objects.nonNull(target.getQuestion())){
+                            title = getQuestionId(target.getQuestion().getTitle());
+                        }
+                        if(set.contains(questionId)){
+                            continue;
+                        }
+                        log.info("ID: " + target.getId());
+                        log.info("类型: " + target.getType());
+                        log.info("标题: " + title);
+                        log.info("questionId: " + questionId);
+                        log.info("内容: " + target.getExcerpt());
+                        set.add(questionId);
+                        CacheUtils.questionSet.add(questionId);
+                        WorkFlow workFlow = new WorkFlow();
+                        workFlow.setBusiSno( SnowflakeUtils.nextId());
+                        workFlow.setStep("");
+                        workFlow.setRoute("zhihuGenerator,zhiHuPublish");//
+                        WorkFlowContext flowContext = new WorkFlowContext(workFlow);
+                        flowContext.putParam("zhiHuGenerator_title", title);
+                        // flowContext.putParam("zhiHuGenerator_excerpt", target.getExcerpt());
+                        flowContext.putParam("zhiHuPublish_questionId",questionId);
 
-                    WorkFlow workFlow = new WorkFlow();
-                    workFlow.setBusiSno(SnowflakeUtils.nextId());
-                    workFlow.setStep("");
-                    workFlow.setRoute("GeneratorOutline,GeneratorDetailedOutline,GeneratorAllArticle,GeneratorAllArticleConvert");
-                    WorkFlowContext flowContext = new WorkFlowContext(workFlow);
-                    flowContext.putParam("Generator_title", title);
-                    flowContext.putParam("Generator_questionId", questionId);
+//                    WorkFlow workFlow = new WorkFlow();
+//                    workFlow.setBusiSno(SnowflakeUtils.nextId());
+//                    workFlow.setStep("");
+//                    workFlow.setRoute("GeneratorOutline,GeneratorDetailedOutline,GeneratorAllArticle,GeneratorAllArticleConvert");
+//                    WorkFlowContext flowContext = new WorkFlowContext(workFlow);
+//                    flowContext.putParam("Generator_title", title);
+//                    flowContext.putParam("Generator_questionId", questionId);
                     workFlowCreditEngine.doFlow(flowContext);
-                    set.add(questionId);
+
+                    }
+                }catch (Exception ex){
+                    log.error("error===>",ex);
                 }
             }
         } else {

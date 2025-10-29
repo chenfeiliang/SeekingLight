@@ -8,6 +8,7 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import seekLight.entity.WorkFlow;
+import seekLight.utils.CacheUtils;
 import seekLight.utils.SnowflakeUtils;
 import seekLight.utils.SpringUtils;
 import seekLight.workflow.context.WorkFlowContext;
@@ -17,18 +18,20 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+
 @Slf4j
 public class ZhihuHotRankFetcher {
     private static WorkFlowCreditEngine workFlowCreditEngine;
+
     static {
         try {
             workFlowCreditEngine = SpringUtils.getBean(WorkFlowCreditEngine.class);
-        }catch (Exception ex){
+        } catch (Exception ex) {
             log.error("error==>");
         }
     }
 
-    public static void list(){
+    public static void list() {
         // 1. 目标 API URL
         String url = "https://www.zhihu.com/api/v4/creators/rank/hot";
 
@@ -78,7 +81,6 @@ public class ZhihuHotRankFetcher {
             Connection.Response response = connection.execute();
 
 
-
             // 5. 检查响应状态
             if (response.statusCode() == 200) {
                 System.out.println("请求成功！");
@@ -100,19 +102,27 @@ public class ZhihuHotRankFetcher {
                 ObjectMapper mapper = new ObjectMapper();
                 JsonNode rootNode = mapper.readTree(jsonResponse);
                 JsonNode data = rootNode.get("data");
-                for(int i = 0 ;i<data.size();i++){
-                    JsonNode question = data.get(i).get("question");
-                    String qid = ZhihuApiFetcher.getQuestionId(question.get("url").asText());
-                    String title = question.get("title").asText();
-                    log.info("qid:{},title:{}",qid,title);
-                    WorkFlow workFlow = new WorkFlow();
-                    workFlow.setBusiSno( SnowflakeUtils.nextId());
-                    workFlow.setStep("");
-                    workFlow.setRoute("judgeType,zhihuGenerator,zhiHuPublish");//
-                    WorkFlowContext flowContext = new WorkFlowContext(workFlow);
-                    flowContext.putParam("zhiHuGenerator_title", title);
-                    flowContext.putParam("zhiHuPublish_questionId",qid);
-                    workFlowCreditEngine.doFlow(flowContext);
+                for (int i = 0; i < data.size(); i++) {
+                    try {
+                        JsonNode question = data.get(i).get("question");
+                        String qid = ZhihuApiFetcher.getQuestionId(question.get("url").asText());
+                        if (CacheUtils.questionSet.contains(qid)) {
+                            continue;
+                        }
+                        CacheUtils.questionSet.add(qid);
+                        String title = question.get("title").asText();
+                        log.info("qid:{},title:{}", qid, title);
+                        WorkFlow workFlow = new WorkFlow();
+                        workFlow.setBusiSno(SnowflakeUtils.nextId());
+                        workFlow.setStep("");
+                        workFlow.setRoute("zhihuGenerator,zhiHuPublish");//
+                        WorkFlowContext flowContext = new WorkFlowContext(workFlow);
+                        flowContext.putParam("zhiHuGenerator_title", title);
+                        flowContext.putParam("zhiHuPublish_questionId", qid);
+                        workFlowCreditEngine.doFlow(flowContext);
+                    } catch (Exception ex) {
+                        log.error("error==>", ex);
+                    }
                 }
             } else {
                 System.err.println("请求失败，状态码: " + response.statusCode());
@@ -133,6 +143,7 @@ public class ZhihuHotRankFetcher {
 
     /**
      * Brotli 手动解压方法：将压缩的字节数组解压为原始字节数组
+     *
      * @param compressedBytes 未解压的 Brotli 压缩字节数组
      * @return 解压后的原始字节数组
      * @throws IOException 解压过程中的IO异常

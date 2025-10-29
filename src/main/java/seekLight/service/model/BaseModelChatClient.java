@@ -76,11 +76,13 @@ public abstract class BaseModelChatClient {
             SeekFileUtils.writeLines(file, Arrays.asList(String.format("问 [%s] : \n%s\n", mainUser.getRole(), finalQuestion)), true);
             mainUserAnswer = mainUser.chat(finalQuestion);
             SeekFileUtils.writeLines(file, Arrays.asList(String.format("[%s] 答: \n%s\n", mainUser.getRole(), mainUserAnswer)), true);
-            //获取建议
-            String suggestion = getSuggestion(rules,mainUserAnswer,role);
-            question = String.format("你之前的答案是:%s\n,请根据我另外一个专家朋友的建议:%s\n" +
-                            "请在原答案的基础上优化内容，如偏差较大可以重新生成"
-                    , mainUserAnswer, suggestion);
+            if(i!=checkNum-1){
+                //获取建议
+                String suggestion = getSuggestion(rules,mainUserAnswer,role);
+                question = String.format("你之前的答案是:%s\n,请根据我另外一个专家朋友的建议:%s\n" +
+                                ",另外你的回答过于AI，请不要用固定的套路语言回答，要模拟人的语气回答，请在原答案的基础上优化内容，如偏差较大可以重新生成"
+                        , mainUserAnswer, suggestion);
+            }
         }
         return mainUserAnswer;
     }
@@ -96,7 +98,7 @@ public abstract class BaseModelChatClient {
             String finalMainUserAnswer = mainUserAnswer;
             tasks.add(() -> {
                 // 每个任务内执行：获取模型 -> 构建问题 -> 调用 chat 方法
-                BaseModelChatClient checkUser = ModelManager.getModel("ollama", role + (index + 1),"qwen3:1.7b");
+                BaseModelChatClient checkUser = ModelManager.getModel("ollama", role + (index + 1),"qwen3:8b");
                 String checkQuestion = String.format(
                         "你是一个%s，仅给建议不创作,请检查下面的内容:%s\n" +
                                 "是否满足规则: %s,请记住：满足则返回\"\",不满足从专业的角度给出对应的建议给出对应的1-3条建议" +

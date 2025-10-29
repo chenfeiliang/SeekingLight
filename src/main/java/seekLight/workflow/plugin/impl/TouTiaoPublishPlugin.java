@@ -6,7 +6,6 @@ import seekLight.workflow.fecther.Fetcher;
 import seekLight.workflow.fecther.FetcherChain;
 import seekLight.workflow.fecther.impl.BaseMapFetcher;
 import seekLight.workflow.interceptor.ToutiaoPublishInterceptor;
-import seekLight.workflow.interceptor.ZhihuPublishInterceptor;
 import seekLight.workflow.plugin.AbstractPlugin;
 
 import java.util.Map;

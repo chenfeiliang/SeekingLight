@@ -5,6 +5,7 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import lombok.extern.slf4j.Slf4j;
+import seekLight.utils.CacheUtils;
 
 @SpringBootApplication
 @MapperScan("seekLight.mapper")
@@ -13,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SpringbootApplication {
 
 	public static void main(String[] args) {
-
 	    SpringApplication.run(SpringbootApplication.class, args);
+		CacheUtils.init();
 	}
 }

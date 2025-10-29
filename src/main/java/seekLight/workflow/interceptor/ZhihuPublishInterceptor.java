@@ -1,5 +1,6 @@
 package seekLight.workflow.interceptor;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Component;
 import seekLight.entity.WorkFlow;
 
@@ -16,7 +17,9 @@ public class ZhihuPublishInterceptor implements PluginInterceptor<WorkFlowContex
 
     @Override
     public void afterFetch(WorkFlowContext flow, Map<String,String> data) {
-       // throw new FlowAsyncInterrupterException("临时中断");
+        if(!StringUtils.equals(flow.getParam("publishByMyself"),"1")){
+            throw new FlowAsyncInterrupterException("临时中断");
+        }
         String publish = ZhihuAnswerPublisher.publish(data.get("zhiHuPublish_questionId"), data.get("zhiHuPublish_content"));
         log.info("publish结果："+publish);
         flow.putParam("zhihuPublish_result",publish);

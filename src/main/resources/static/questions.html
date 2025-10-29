@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问题列表</title>
+    <!-- 引入Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 引入Font Awesome图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+    /* 基础样式 */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f9fa;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    /* 头部样式 */
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    header h1 {
+      color: #2c3e50;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: #6c757d;
+      font-size: 1.1rem;
+    }
+
+    /* 问题卡片样式 */
+    .question-card {
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .question-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+    }
+
+    .question-header {
+      padding: 1.2rem 1.5rem;
+      background-color: #f1f8ff;
+      border-bottom: 1px solid #e3f2fd;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .question-header h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      color: #0d6efd;
+      font-weight: 600;
+    }
+
+    .question-content {
+      padding: 0 1.5rem;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, padding 0.4s ease;
+    }
+
+    .question-content.show {
+      padding: 1.5rem;
+      max-height: 1000px;
+    }
+
+    .question-content p {
+      margin: 0 0 1rem 0;
+      color: #495057;
+      line-height: 1.7;
+    }
+
+    /* 发布按钮样式 */
+    .publish-btn-container {
+      text-align: right;
+      margin-top: 1rem;
+    }
+
+    .publish-btn {
+      background-color: #198754;
+      color: white;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.9rem;
+    }
+
+    .publish-btn:hover {
+      background-color: #157347;
+    }
+
+    .publish-btn.published {
+      background-color: #6c757d;
+      cursor: not-allowed;
+    }
+
+    .publish-btn.published:hover {
+      background-color: #6c757d;
+    }
+
+    /* 加载状态样式 */
+    .loading {
+      text-align: center;
+      padding: 3rem 0;
+    }
+
+    .spinner {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #0d6efd;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* 错误提示样式 */
+    .error-message {
+      background-color: #fff5f5;
+      border-left: 4px solid #e53e3e;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      border-radius: 4px;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    /* 空状态样式 */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 1rem;
+      color: #6c757d;
+      display: none;
+    }
+
+    .empty-state.show {
+      display: block;
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      color: #adb5bd;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+      .question-header h3 {
+        font-size: 1.1rem;
+      }
+
+      header h1 {
+        font-size: 1.8rem;
+      }
+    }
+
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>常见问题列表</h1>
+        <p>点击问题可折叠/展开答案</p>
+    </header>
+
+    <!-- 错误提示 -->
+    <div class="error-message" id="errorMessage">
+        <strong><i class="fas fa-exclamation-circle"></i> 加载失败</strong>
+        <p>无法获取问题列表，请稍后重试。</p>
+    </div>
+
+    <!-- 加载状态 -->
+    <div class="loading" id="loadingIndicator">
+        <div class="spinner"></div>
+        <p>正在加载问题列表...</p>
+    </div>
+
+    <!-- 空状态 -->
+    <div class="empty-state" id="emptyState">
+        <i class="fas fa-question-circle"></i>
+        <h3>暂无问题</h3>
+        <p>目前没有任何问题记录</p>
+    </div>
+
+    <!-- 问题列表容器 -->
+    <div id="questionsContainer"></div>
+</div>
+
+<!-- 引入jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- 引入Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+      // 获取DOM元素
+      const $questionsContainer = $('#questionsContainer');
+      const $loadingIndicator = $('#loadingIndicator');
+      const $errorMessage = $('#errorMessage');
+      const $emptyState = $('#emptyState');
+
+      // 从接口获取问题列表
+      function fetchQuestions() {
+        $.ajax({
+          url: 'http://paulchen.gnway.cc/getQuestions',
+          method: 'GET',
+          dataType: 'json',
+          beforeSend: function() {
+            // 显示加载状态
+            $loadingIndicator.show();
+            $errorMessage.hide();
+            $emptyState.hide();
+            $questionsContainer.empty();
+          },
+          success: function(data) {
+            // 隐藏加载状态
+            $loadingIndicator.hide();
+
+            // 检查返回数据是否为空
+            if (data && data.length > 0) {
+              // 渲染问题列表
+              renderQuestions(data);
+            } else {
+              // 显示空状态
+              $emptyState.show();
+            }
+          },
+          error: function(xhr, status, error) {
+            // 隐藏加载状态，显示错误信息
+            $loadingIndicator.hide();
+            $errorMessage.show();
+            console.error('获取问题列表失败:', error);
+          }
+        });
+      }
+
+      // 发布问题（对接新接口）
+    function publishQuestion(questionId, $btn) {
+        // 发送POST请求到后端发布接口
+        $.ajax({
+            url: `/publishQuestion/${questionId}`, // 对应后端路径参数
+            method: 'POST', // 与后端接口的POST方式一致
+            beforeSend: function() {
+                // 发布中状态：显示加载动画，禁用按钮
+                $btn.html('<i class="fas fa-spinner fa-spin"></i> 发布中...').prop('disabled', true);
+            },
+            success: function(response) {
+                // 接口调用成功（无论业务成功与否）
+                $btn.prop('disabled', false);
+                // 假设后端返回字符串提示，实际可根据JSON结构解析
+                if (response.includes("成功")) {
+                    $btn.html('<i class="fas fa-check"></i> 已发布').addClass('published');
+                    alert('发布成功：' + response);
+                    // 可选择刷新列表，显示最新状态
+                    fetchQuestions();
+                } else {
+                    $btn.html('<i class="fas fa-share-alt"></i> 发布');
+                    alert('发布失败：' + response);
+                }
+            },
+            error: function(xhr) {
+                // 接口调用失败（网络错误、500等）
+                $btn.html('<i class="fas fa-share-alt"></i> 发布').prop('disabled', false);
+                alert('发布请求失败：' + (xhr.responseText || '网络异常'));
+            }
+        });
+    }
+
+      // 渲染问题列表
+      function renderQuestions(questions) {
+        questions.forEach((question, index) => {
+          // 创建问题卡片元素
+          const $card = $('<div class="question-card"></div>');
+
+          // 创建问题头部
+          const $header = $(`
+            <div class="question-header">
+              <h3><i class="fas fa-question-circle me-2"></i> ${question.question}</h3>
+              <i class="fas fa-chevron-down text-muted transition-transform duration-300 rotate-180"></i>
+            </div>
+          `);
+
+          // 确定发布按钮状态
+          const publishBtnClass = question.published ? 'published' : '';
+          const publishBtnIcon = question.published ? 'check' : 'share-alt';
+          const publishBtnText = question.published ? '已发布' : '发布';
+          const publishBtnDisabled = question.published ? 'disabled' : '';
+
+          // 创建问题内容（答案）- 默认添加show类使其展开
+          const $content = $(`
+            <div class="question-content show">
+              <p><i class="fas fa-check-circle text-success me-2"></i> ${question.answer}</p>
+              <div class="publish-btn-container">
+                <button class="publish-btn ${publishBtnClass}" ${publishBtnDisabled} data-question-id="${question.questionId}">
+                  <i class="fas fa-${publishBtnIcon}"></i> ${publishBtnText}
+                </button>
+              </div>
+            </div>
+          `);
+
+          // 添加到卡片并添加到容器
+          $card.append($header).append($content);
+          $questionsContainer.append($card);
+
+          // 为问题头部添加点击事件，切换答案显示/隐藏
+          $header.on('click', function() {
+            $content.toggleClass('show');
+            $header.find('.fa-chevron-down').toggleClass('rotate-180');
+          });
+
+          // 为发布按钮添加点击事件
+          const $publishBtn = $content.find('.publish-btn:not(.published)');
+          $publishBtn.on('click', function() {
+            const questionId = $(this).data('question-id');
+            publishQuestion(questionId, $(this));
+          });
+        });
+      }
+
+      // 初始加载问题列表
+      fetchQuestions();
+    });
+
+</script>
+</body>
+</html>

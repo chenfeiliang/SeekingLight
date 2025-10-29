@@ -8,6 +8,7 @@ import org.jsoup.Jsoup;
 import seekLight.agent.Tool;
 import seekLight.dto.QuestionDto;
 import seekLight.entity.WorkFlow;
+import seekLight.utils.CacheUtils;
 import seekLight.utils.SnowflakeUtils;
 import seekLight.utils.SpringUtils;
 import seekLight.workflow.context.WorkFlowContext;
@@ -180,12 +181,16 @@ public class ZhihuHotListCrawler implements Tool {
                 String detail = target.get("excerpt_area").get("text").asText();
                 //questionId
                 String questionId = ZhihuApiFetcher.getQuestionId(target.get("link").get("url").asText());
+                if(CacheUtils.questionSet.contains(questionId)){
+                    continue;
+                }
+                CacheUtils.questionSet.add(questionId);
                 // 输出结果
                 log.info("【{}】questionId:{},title:{},热度:{},detail:{}",i+1,questionId,title,metrics_area,detail);
                 WorkFlow workFlow = new WorkFlow();
                 workFlow.setBusiSno( SnowflakeUtils.nextId());
                 workFlow.setStep("");
-                workFlow.setRoute("judgeType,zhihuGenerator");//,zhiHuPublish
+                workFlow.setRoute("zhihuGenerator,zhiHuPublish");//,zhiHuPublish
                 WorkFlowContext flowContext = new WorkFlowContext(workFlow);
                 flowContext.putParam("zhiHuGenerator_title", title);
                 flowContext.putParam("zhiHuPublish_questionId",questionId);
